@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080b12" />
+    <title>STARFLY — Điện ảnh ngoài quỹ đạo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://image.tmdb.org" />
+    <link rel="dns-prefetch" href="https://image.tmdb.org" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/css/style.css" />
+    <link rel="stylesheet" href="/assets/css/booking.css" />
+    <link rel="stylesheet" href="/assets/css/support-widget.css" />
+  </head>
+  <body>
+    <div class="noise"></div>
+    <header class="navbar" id="navbar">
+      <a class="brand" href="#home" aria-label="STARFLY home"
+        ><span>✦</span> STARFLY</a
+      >
+      <nav class="nav-links" aria-label="Điều hướng chính">
+        <a class="active" href="#home">Trang chủ</a>
+        <a href="#trending">Trending</a>
+        <a href="#new-releases">Trailer mới</a>
+        <a href="#genres">Thể loại</a>
+        <a href="#cinemas">Hệ thống rạp</a>
+        <a href="/ai/">Trợ lý AI</a>
+        <button class="nav-text-button" id="myTicketsButton">Vé của tôi</button>
+        <button class="nav-text-button" id="adminButton">Quản trị</button>
+      </nav>
+      <div class="nav-actions">
+        <div class="search-control" id="searchControl">
+          <button class="search-trigger" id="searchBtn" aria-label="Tìm kiếm" aria-expanded="false">
+            ⌕ <span>Tìm kiếm</span>
+          </button>
+          <div class="search-panel" id="searchPanel">
+            <div class="search-box">
+              <span>⌕</span>
+              <input id="searchInput" type="search" placeholder="Tìm kiếm phim..." autocomplete="off" />
+              <button id="closeSearch" aria-label="Đóng tìm kiếm">×</button>
+            </div>
+            <div class="search-suggestions" id="searchSuggestions"></div>
+          </div>
+        </div>
+        <button
+          class="round-btn"
+          id="favoritesBtn"
+          aria-label="Phim yêu thích"
+        >
+          ♡
+        </button>
+        <button class="nav-text-button account-button" id="accountButton" type="button">Đăng nhập</button>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="hero">
+        <div class="hero-track" id="heroTrack"></div>
+
+        <div class="hero-edge-nav" aria-label="Điều hướng phim nổi bật">
+          <div class="hero-edge-zone hero-edge-zone-prev">
+            <button class="hero-edge-button hero-edge-prev" id="heroPrev" aria-label="Phim trước">‹</button>
+          </div>
+          <div class="hero-edge-zone hero-edge-zone-next">
+            <button class="hero-edge-button hero-edge-next" id="heroNext" aria-label="Phim tiếp">›</button>
+          </div>
+        </div>
+
+        <div class="hero-carousel-wrap">
+          <div class="carousel-head">
+            <span>ĐANG PHÁT</span>
+            <span id="heroCount"></span>
+          </div>
+          <div class="hero-carousel" id="heroCarousel"></div>
+          <div class="hero-indicators" id="heroIndicators" aria-label="Các slide phim"></div>
+        </div>
+
+        <div class="scroll-mark">
+          <span>KHÁM PHÁ THƯ VIỆN</span>
+          <b></b>
+        </div>
+      </section>
+
+      <section
+        class="content-section search-results-section"
+        id="searchResultsSection"
+      >
+        <div class="section-heading">
+          <div>
+            <span class="kicker">KẾT QUẢ TÌM KIẾM</span>
+            <h2 id="searchHeading">Kết quả</h2>
+          </div>
+          <button class="clear-search" id="clearSearch">Xóa tìm kiếm</button>
+        </div>
+
+        <div class="rail-carousel">
+          <button class="rail-arrow rail-prev" type="button" aria-label="Phim trước">←</button>
+          <div class="rail" id="searchRail"></div>
+          <button class="rail-arrow rail-next" type="button" aria-label="Phim tiếp">→</button>
+        </div>
+
+        <div class="empty-state" id="emptySearch">
+          <strong>✦</strong>
+          <h3>Không tìm thấy tín hiệu</h3>
+          <p>Thử một tên phim hoặc thể loại khác.</p>
+        </div>
+      </section>
+
+      <section class="content-section" id="trending">
+        <div class="section-heading">
+          <div>
+            <span class="kicker">ĐƯỢC XEM NHIỀU NHẤT</span>
+            <h2>Trending</h2>
+          </div>
+          <span class="rail-index">01 / 08</span>
+        </div>
+
+        <div class="rail-carousel">
+          <button class="rail-arrow rail-prev" type="button" aria-label="Phim trước">←</button>
+          <div class="rail" id="trendingRail"></div>
+          <button class="rail-arrow rail-next" type="button" aria-label="Phim tiếp">→</button>
+        </div>
+      </section>
+
+      <section class="content-section" id="new-releases">
+        <div class="section-heading">
+          <div>
+            <span class="kicker">VỪA HẠ CÁNH</span>
+            <h2>Trailer mới</h2>
+          </div>
+          <span class="rail-index">02 / 08</span>
+        </div>
+
+        <div class="rail-carousel">
+          <button class="rail-arrow rail-prev" type="button" aria-label="Phim trước">←</button>
+          <div class="rail" id="newRail"></div>
+          <button class="rail-arrow rail-next" type="button" aria-label="Phim tiếp">→</button>
+        </div>
+      </section>
+
+      <section class="content-section" id="catalogSections"></section>
+
+      <section class="content-section" id="genres">
+        <div class="section-heading">
+          <div>
+            <span class="kicker">CHỌN TỌA ĐỘ</span>
+            <h2>Khám phá thể loại</h2>
+          </div>
+        </div>
+
+        <div class="genre-strip">
+          <button data-genre="Sci-Fi">
+            <span>01</span>🚀<b>Sci-Fi</b><small>Vượt giới hạn</small>
+          </button>
+
+          <button data-genre="Action">
+            <span>02</span>⚔️<b>Action</b><small>Không khoan nhượng</small>
+          </button>
+
+          <button data-genre="Horror">
+            <span>03</span>👻<b>Horror</b><small>Đừng nhìn lại</small>
+          </button>
+
+          <button data-genre="Romance">
+            <span>04</span>♡<b>Romance</b><small>Chạm vào tim</small>
+          </button>
+
+          <button data-genre="Anime">
+            <span>05</span>✧<b>Anime</b><small>Thế giới khác</small>
+          </button>
+
+          <button data-genre="Comedy">
+            <span>06</span>☻<b>Comedy</b><small>Cười thật to</small>
+          </button>
+        </div>
+      </section>
+
+      <section
+        class="content-section management-section"
+        id="managementSection"
+      >
+        <div class="section-heading">
+          <div>
+            <span class="kicker">CONTROL ROOM</span>
+            <h2>Quản lý STARFLY</h2>
+          </div>
+          <span class="rail-index" id="managementCount"></span>
+        </div>
+
+        <div class="management-tabs">
+          <button class="management-tab active" data-management="overview">Tổng quan</button>
+          <button class="management-tab active" data-management="movies">
+            Phim
+          </button>
+
+          <button class="management-tab" data-management="showtimes">
+            Suất chiếu
+          </button>
+
+          <button class="management-tab" data-management="tickets">
+            Vé
+          </button>
+
+          <button class="management-tab" data-management="customers">
+            Khách hàng
+          </button>
+
+          <button class="management-tab" data-management="seats">
+            Ghế
+          </button>
+
+          <button class="management-tab" data-management="orders">
+            Đơn hàng
+          </button>
+          <button class="management-tab" data-management="foods">Bắp nước</button>
+        </div>
+
+        <div class="admin-overview" id="adminOverview" hidden></div>
+
+        <div class="management-toolbar">
+          <input
+            id="managementSearch"
+            type="search"
+            placeholder="Tìm kiếm dữ liệu..."
+          />
+
+          <select id="managementStatus">
+            <option value="">Tất cả trạng thái</option>
+          </select>
+
+          <select id="managementShowtime" class="is-hidden">
+            <option value="">Chọn suất chiếu...</option>
+          </select>
+          <select id="managementMovie" class="is-hidden">
+            <option value="">Chọn phim...</option>
+          </select>
+
+          <button class="management-add" id="addShowtimeButton">
+            + Thêm
+          </button>
+
+          <button class="management-bulk" id="bulkShowtimeButton">
+            ⚡ Suất chiếu hàng loạt
+          </button>
+
+          <button
+            class="management-refresh"
+            id="managementRefresh"
+            type="button"
+            aria-label="Tải lại dữ liệu"
+          >
+            ⟳
+          </button>
+        </div>
+
+        <div class="management-table-wrap">
+          <table class="management-table">
+            <thead id="managementHead"></thead>
+            <tbody id="managementBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <div
+      class="modal"
+      id="trailerModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Trailer phim"
+    >
+      <div class="video-modal">
+        <button class="modal-close" id="closeTrailer" aria-label="Đóng">
+          ×
+        </button>
+        <div class="video-size-controls" role="group" aria-label="Kích thước trailer">
+          <button id="trailerShrink" type="button" aria-label="Thu nhỏ trailer" title="Thu nhỏ">−</button>
+          <button id="trailerResetSize" type="button" aria-label="Kích thước mặc định" title="Mặc định">⤢</button>
+          <button id="trailerGrow" type="button" aria-label="Phóng to trailer" title="Phóng to">+</button>
+        </div>
+
+        <div class="video-frame">
+          <iframe
+            id="trailerFrame"
+            title="Movie trailer"
+            allow="autoplay; encrypted-media"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <div class="video-caption">
+          <div>
+            <span class="kicker">STARFLY PREMIERE</span>
+            <h2 id="videoTitle"></h2>
+            <p id="videoDescription"></p>
+            <button class="primary-btn" id="buyFromTrailer">Mua vé</button>
+          </div>
+          <span id="videoMeta"></span>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal"
+      id="bookingModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mua vé"
+    >
+      <div class="booking-modal">
+        <button class="modal-close" id="closeBooking" aria-label="Đóng">
+          ×
+        </button>
+
+        <div class="booking-header">
+          <span class="kicker">STARFLY TICKETING</span>
+          <h2 id="bookingTitle">Đặt vé xem phim</h2>
+          <p id="bookingSubtitle">Chọn một suất chiếu để tiếp tục.</p>
+        </div>
+
+        <div class="booking-step" id="showtimeStep">
+          <h3>01 / Chọn suất chiếu</h3>
+          <div class="showtime-list" id="showtimeList"></div>
+        </div>
+
+        <div class="booking-step is-hidden" id="seatStep">
+          <h3>02 / Chọn ghế <span id="seatCount">0 ghế</span></h3>
+          <div class="screen-label">MÀN HÌNH</div>
+          <div class="seat-map" id="seatMap"></div>
+
+          <div class="seat-legend">
+            <span><i class="seat-dot available"></i>Còn trống</span>
+            <span><i class="seat-dot selected"></i>Đang chọn</span>
+            <span><i class="seat-dot sold"></i>Đã bán</span>
+          </div>
+        </div>
+
+        <div class="booking-step is-hidden" id="foodStep">
+          <h3>03 / Bắp &amp; nước <span id="foodCount">0 món</span></h3>
+          <div class="food-grid" id="foodList"></div>
+          <p class="food-hint">
+            Bạn có thể bỏ qua bước này nếu chỉ muốn mua vé.
+          </p>
+        </div>
+
+        <div class="booking-step is-hidden" id="customerStep">
+          <h3>04 / Thông tin khách hàng</h3>
+
+          <div class="customer-form">
+            <input id="customerName" placeholder="Họ và tên" required />
+
+            <input
+              id="customerEmail"
+              type="email"
+              placeholder="Email"
+              required
+            />
+
+            <input
+              id="customerPhone"
+              placeholder="Số điện thoại"
+              required
+            />
+          </div>
+          <div class="payment-choice">
+            <span>Chọn phương thức thanh toán</span>
+            <label><input type="radio" name="paymentMethod" value="cash" checked /> Tiền mặt — Thanh toán tại quầy</label>
+            <label><input type="radio" name="paymentMethod" value="sepay" /> Chuyển khoản SePay</label>
+          </div>
+        </div>
+
+        <div class="booking-step payment-step is-hidden" id="paymentStep">
+          <h3>05 / Thanh toán</h3>
+          <div class="payment-method" id="paymentMethodLabel">Thanh toán tại quầy</div>
+
+          <div class="payment-box">
+            <img id="paymentQr" alt="Mã QR chuyển khoản" class="is-hidden" />
+            <div>
+              <strong id="paymentHeading">Thanh toán đơn hàng tại rạp</strong>
+              <p id="paymentInstructions">
+                Vui lòng thanh toán tiền mặt tại quầy STARFLY để xác nhận vé.
+              </p>
+              <div class="booking-reference" id="paymentOrderCode"></div>
+            </div>
+          </div>
+
+          <div class="payment-details" id="paymentDetails"></div>
+        </div>
+
+        <div class="booking-summary" id="bookingSummary">
+          <span>Chưa chọn suất chiếu</span>
+          <strong>0 đ</strong>
+        </div>
+
+        <button
+          class="primary-btn booking-submit is-hidden"
+          id="bookingSubmit"
+        >
+          Đặt vé
+        </button>
+
+        <div class="booking-message" id="bookingMessage"></div>
+      </div>
+    </div>
+
+    <div
+      class="modal"
+      id="ticketsModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vé của tôi"
+    >
+      <div class="list-modal">
+        <button class="modal-close" id="closeTickets" aria-label="Đóng">
+          ×
+        </button>
+
+        <span class="kicker">YOUR PASSES</span>
+        <h2>Vé của tôi</h2>
+
+        <div id="ticketsList" class="tickets-list"></div>
+      </div>
+    </div>
+
+    <section class="content-section cinema-section" id="cinemas">
+      <div class="section-heading">
+        <div>
+          <span class="kicker">STARFLY CINEMA SYSTEM</span>
+          <h2>HỆ THỐNG RẠP STARFLY</h2>
+        </div>
+        <span class="rail-index" id="cinemaIndex">05 CỤM RẠP</span>
+      </div>
+
+      <div class="cinema-grid">
+        <article class="cinema-card">
+          <span class="cinema-number">01</span>
+          <h3>STARFLY Landmark 81</h3>
+          <p>772 Điện Biên Phủ, Phường 22, Bình Thạnh, TP. Hồ Chí Minh</p>
+          <small>08:00 – 23:30 · 6 phòng chiếu · IMAX Laser</small>
+          <a
+            class="cinema-link"
+            href="https://www.google.com/maps/search/?api=1&query=Landmark%2081%2C%20772%20%C4%90i%E1%BB%87n%20Bi%C3%AAn%20Ph%E1%BB%A7%2C%20B%C3%ACnh%20Th%E1%BA%A1nh%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xem trên Google Maps ↗
+          </a>
+        </article>
+
+        <article class="cinema-card">
+          <span class="cinema-number">02</span>
+          <h3>STARFLY Vincom Đồng Khởi</h3>
+          <p>72 Lê Thánh Tôn, Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
+          <small>09:00 – 24:00 · 5 phòng chiếu · Dolby Atmos</small>
+          <a
+            class="cinema-link"
+            href="https://www.google.com/maps/search/?api=1&query=Vincom%20Center%20%C4%90%E1%BB%93ng%20Kh%E1%BB%9Fi%2C%2072%20L%C3%AA%20Th%C3%A1nh%20T%C3%B4n%2C%20Qu%E1%BA%ADn%201%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xem trên Google Maps ↗
+          </a>
+        </article>
+
+        <article class="cinema-card">
+          <span class="cinema-number">03</span>
+          <h3>STARFLY AEON Tân Phú</h3>
+          <p>30 Bờ Bao Tân Thắng, Sơn Kỳ, Tân Phú, TP. Hồ Chí Minh</p>
+          <small>08:30 – 23:00 · 7 phòng chiếu · ScreenX</small>
+          <a
+            class="cinema-link"
+            href="https://www.google.com/maps/search/?api=1&query=AEON%20Mall%20T%C3%A2n%20Ph%C3%BA%2C%2030%20B%E1%BB%9D%20Bao%20T%C3%A2n%20Th%E1%BA%AFng%2C%20T%C3%A2n%20Ph%C3%BA%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xem trên Google Maps ↗
+          </a>
+        </article>
+
+        <article class="cinema-card">
+          <span class="cinema-number">04</span>
+          <h3>STARFLY Vincom Thảo Điền</h3>
+          <p>161 Xa Lộ Hà Nội, Thảo Điền, TP. Thủ Đức, TP. Hồ Chí Minh</p>
+          <small>09:00 – 23:30 · 4 phòng chiếu · 4DX</small>
+          <a
+            class="cinema-link"
+            href="https://www.google.com/maps/search/?api=1&query=Vincom%20Mega%20Mall%20Th%E1%BA%A3o%20%C4%90i%E1%BB%81n%2C%20161%20Xa%20L%E1%BB%99%20H%C3%A0%20N%E1%BB%99i%2C%20Th%E1%BB%A7%20%C4%90%E1%BB%A9c%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xem trên Google Maps ↗
+          </a>
+        </article>
+
+        <article class="cinema-card">
+          <span class="cinema-number">05</span>
+          <h3>STARFLY Sense City Cần Thơ</h3>
+          <p>01 Đại lộ Hoà Bình, Ninh Kiều, TP. Cần Thơ</p>
+          <small>08:00 – 23:00 · 3 phòng chiếu · Hotline 1900 6868</small>
+          <a
+            class="cinema-link"
+            href="https://www.google.com/maps/search/?api=1&query=Sense%20City%20C%E1%BA%A7n%20Th%C6%A1%2C%2001%20%C4%90%E1%BA%A1i%20l%E1%BB%99%20Ho%C3%A0%20B%C3%ACnh%2C%20Ninh%20Ki%E1%BB%81u%2C%20C%E1%BA%A7n%20Th%C6%A1"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xem trên Google Maps ↗
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <div
+      class="modal"
+      id="adminFormModal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Biểu mẫu quản trị"
+    >
+      <div class="admin-form">
+        <button class="modal-close" id="adminFormClose" aria-label="Đóng">
+          ×
+        </button>
+
+        <span class="kicker">STARFLY CONTROL ROOM</span>
+        <h2 id="adminFormTitle">Thêm dữ liệu</h2>
+
+        <div class="admin-form-body" id="adminFormFields"></div>
+
+        <div class="admin-form-actions">
+          <button class="primary-btn" id="adminFormSubmit" type="button">
+            Lưu dữ liệu
+          </button>
+          <button class="ghost-btn" id="adminFormCancel" type="button">
+            Huỷ
+          </button>
+        </div>
+
+        <div class="booking-message" id="adminFormMessage"></div>
+      </div>
+    </div>
+
+    <footer>
+      <a class="brand" href="#home">
+        <span>✦</span> STARFLY
+      </a>
+
+      <p>Những câu chuyện vượt khỏi màn ảnh.</p>
+
+      <small>© 2026 STARFLY / ALL SYSTEMS NOMINAL</small>
+    </footer>
+
+    <section class="support-chat-panel" id="supportChatPanel" aria-label="Trợ lý STARFLY" aria-hidden="true">
+      <header class="support-chat-header">
+        <div><strong>Trợ lý STARFLY</strong><small>Hỏi nhanh về vé và thanh toán</small></div>
+        <a class="support-chat-full-link" href="/ai/" title="Mở giao diện chat đầy đủ" aria-label="Mở giao diện chat đầy đủ">⤢</a>
+        <button id="supportChatClose" type="button" aria-label="Đóng chat">×</button>
+      </header>
+      <div class="support-chat-messages" id="supportChatMessages" aria-live="polite"></div>
+      <form class="support-chat-form" id="supportChatForm">
+        <input id="supportChatInput" type="text" maxlength="1200" placeholder="Nhập câu hỏi..." autocomplete="off" required />
+        <button id="supportChatSend" type="submit" aria-label="Gửi tin nhắn">↑</button>
+      </form>
+    </section>
+
+    <a class="support-chat-launcher" href="/ai/" aria-label="Mở trợ lý hỗ trợ STARFLY">
+      <span aria-hidden="true">✦</span> Trợ lý STARFLY
+    </a>
+
+    <script src="/assets/js/script.js"></script>
+    <script src="/assets/js/support-widget.js"></script>
+  </body>
+</html>

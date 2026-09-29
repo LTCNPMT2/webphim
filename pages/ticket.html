@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080b12" />
+  <title>Vé của bạn · STARFLY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/css/ticket.css" />
+</head>
+<body>
+  <main class="receipt-shell">
+    <a class="brand" href="/"><span>✦</span> STARFLY</a>
+    <section id="missing" class="missing hidden">
+      <h1>Chưa có vé để hiển thị</h1>
+      <p>Hãy đặt vé trước, sau đó vé sẽ xuất hiện tại đây.</p>
+      <a class="button primary" href="/">Về trang phim</a>
+    </section>
+    <div id="receipt" class="hidden">
+      <header class="success-head">
+        <div class="success-icon">✓</div>
+        <p class="eyebrow">STARFLY TICKETING</p>
+        <h1>Cảm ơn bạn đã đặt vé!</h1>
+        <p class="subhead">Lưu vé này và đưa mã xác nhận cho nhân viên khi thanh toán.</p>
+      </header>
+
+      <article class="ticket-card">
+        <div class="ticket-top"><div class="brand-small">✦ STARFLY CINEMA</div><span id="paymentStatus" class="status">ĐANG CHỜ THANH TOÁN</span></div>
+        <div class="movie-title" id="movieTitle"></div>
+        <div class="ticket-grid">
+          <div><span>Ngày chiếu</span><strong id="showDate"></strong></div>
+          <div><span>Giờ chiếu</span><strong id="showTime"></strong></div>
+          <div><span>Phòng</span><strong id="room"></strong></div>
+          <div><span>Ghế</span><strong id="seats"></strong></div>
+          <div><span>Khách hàng</span><strong id="customer"></strong></div>
+          <div><span>Mã đơn</span><strong id="orderId"></strong></div>
+        </div>
+        <div id="foodSection" class="food-section hidden"><span>Bắp nước</span><div id="foods"></div></div>
+        <div class="ticket-total"><span>Tổng cộng</span><strong id="total"></strong></div>
+        <div class="confirmation-code">
+          <span id="codeLabel">MÃ ĐƯA NHÂN VIÊN</span>
+          <strong id="confirmationCode"></strong>
+          <p id="codeHelp"></p>
+          <div class="ticket-code-image" id="ticketQr" aria-label="Mã QR xác nhận đơn"></div>
+          <small class="ticket-qr-help">Nhân viên có thể quét mã này hoặc nhập mã xác nhận để tra đơn.</small>
+        </div>
+        <section id="transferBox" class="transfer-box hidden">
+          <h2>Thanh toán chuyển khoản</h2>
+          <img id="qrImage" alt="Mã QR thanh toán STARFLY" />
+          <p>Quét QR, ghi đúng mã ở trên làm nội dung chuyển khoản. Đưa mã đó cho nhân viên để tra đơn.</p>
+        </section>
+        <div class="ticket-codes"><span>Mã vé</span><div id="ticketCodes"></div></div>
+        <p class="ticket-note">Vé đang chờ thanh toán sẽ được xác nhận sau khi nhân viên nhận tiền hoặc hệ thống ghi nhận chuyển khoản.</p>
+      </article>
+
+      <div class="actions">
+        <button id="downloadButton" class="button primary" type="button">Tải vé về (.txt)</button>
+        <button id="pdfButton" class="button" type="button">Lưu vé PDF / In</button>
+        <a class="button" href="/">Về trang STARFLY</a>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+  <script src="/assets/js/ticket.js"></script>
+</body>
+</html>

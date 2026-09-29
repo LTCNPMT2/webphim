@@ -1,0 +1,15 @@
+{
+  "name": "starfly",
+  "version": "1.0.0",
+  "description": "STARFLY Cinema Website",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "migrate": "node backend/run-migration.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mysql2": "^3.14.3"
+  }
+}

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0c11">
+    <title>Trợ lý STARFLY</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+    <div class="app-shell">
+        <aside id="sidebar" class="sidebar" aria-label="Conversation history">
+            <div class="sidebar-brand">
+                <div class="brand-mark small"><img src="assets/starfly-logo.png" alt="Starfly"></div>
+                <div><strong>STARFLY</strong><span>trợ lý hỗ trợ khách hàng</span></div>
+                <button id="close-sidebar-btn" class="icon-button sidebar-close" aria-label="Close menu"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <button id="new-chat-btn" class="new-chat-button"><i class="fa-solid fa-plus"></i><span>Cuộc trò chuyện mới</span></button>
+            <div class="history-heading">Các cuộc trò chuyện</div>
+            <div id="chat-history-list" class="chat-history"></div>
+            <div class="sidebar-footer">
+                <a class="sidebar-action cinema-return" href="../index.html"><i class="fa-solid fa-arrow-left"></i><span>Về trang rạp phim</span></a>
+                <button id="settings-toggle-btn" class="sidebar-action"><i class="fa-solid fa-gear"></i><span>Cài đặt Starfly</span></button>
+                <button id="clear-chat-btn" class="sidebar-action danger-action"><i class="fa-solid fa-broom"></i><span>Xóa cuộc trò chuyện</span></button>
+                <div class="sidebar-note"><span class="status-dot"></span> Sẵn sàng lắng nghe</div>
+            </div>
+        </aside>
+        <main class="chat-app">
+            <header class="topbar">
+                <button id="mobile-menu-btn" class="icon-button menu-button" aria-label="Open conversation history"><i class="fa-solid fa-bars-staggered"></i></button>
+                <div class="topbar-title"><div class="brand-mark"><img src="assets/starfly-logo.png" alt="Starfly"></div><div><span class="eyebrow">HỖ TRỢ STARFLY</span><h1>Trợ lý STARFLY</h1></div></div>
+                <div class="connection-status"><span class="status-dot"></span><span>Sẵn sàng</span></div>
+            </header>
+            <section id="messages-container" class="messages-container" aria-live="polite">
+                <div id="welcome-screen" class="welcome-screen">
+                    <div class="hero-orbit"><div class="hero-logo"><img src="assets/starfly-logo.png" alt="Starfly"></div></div>
+                    <span class="welcome-kicker">HỖ TRỢ KHÁCH HÀNG</span><h2>STARFLY có thể giúp gì cho bạn?</h2>
+                    <p>Hỏi mình về cách đặt vé, đăng nhập, thanh toán tại quầy, chuyển khoản hoặc lưu mã vé.</p>
+                    <div class="quick-prompts">
+                        <button class="quick-prompt" data-prompt="Làm thế nào để đặt vé xem phim trên STARFLY?">
+                            <i class="fa-solid fa-compass"></i>
+                            <span>Hướng dẫn mình đặt vé</span>
+                            <i class="fa-solid fa-arrow-up-right"></i>
+                        </button>
+                        <button class="quick-prompt" data-prompt="Mình có thể thanh toán tiền mặt hoặc chuyển khoản như thế nào?">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <span>Các cách thanh toán</span>
+                            <i class="fa-solid fa-arrow-up-right"></i>
+                        </button>
+                        <button class="quick-prompt" data-prompt="Sau khi đặt vé, mình tìm mã xác nhận ở đâu?">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <span>Tìm mã vé xác nhận</span>
+                            <i class="fa-solid fa-arrow-up-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <div id="voice-status" class="voice-status" aria-live="polite" hidden>
+                <span class="voice-status-dot" aria-hidden="true"></span>
+                <div class="voice-status-copy">
+                    <strong id="voice-status-title">Sẵn sàng</strong>
+                    <span id="voice-status-detail">Bấm "Nói chuyện" để trò chuyện bằng giọng nói</span>
+                </div>
+            </div>
+            <div class="composer-wrap">
+                <form id="chat-form" class="composer">
+                    <textarea id="user-input" rows="1" placeholder="Nhập tin nhắn..." aria-label="Nhập tin nhắn cho Starfly"></textarea>
+                    <div class="composer-actions">
+                        <button type="button" id="stt-btn" class="voice-button" aria-label="Nói chuyện" title="Nói chuyện">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span>Nói chuyện</span>
+                        </button>
+                        <button type="submit" id="send-btn" class="send-button" aria-label="Gửi tin nhắn" title="Gửi tin nhắn">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </form>
+                <div class="composer-meta">
+                    <span>Enter để gửi <b>·</b> Shift + Enter để xuống dòng</span>
+                    <span>Starfly chạy cục bộ với Ollama</span>
+                </div>
+            </div>
+        </main>
+        <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+            <div class="modal-card settings-card">
+                <div class="modal-header">
+                    <div>
+                        <span class="eyebrow">CÁ NHÂN HÓA</span>
+                        <h2 id="settings-title">Cài đặt Starfly</h2>
+                    </div>
+                    <button type="button" id="close-modal-btn" class="icon-button" aria-label="Đóng cài đặt" title="Đóng cài đặt">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <section class="settings-section">
+                    <h3>Giao diện</h3>
+                    <div class="theme-options" role="radiogroup" aria-label="Appearance">
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="dark" id="theme-dark">
+                            <span class="theme-radio"></span>
+                            <span>Dark</span>
+                        </label>
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="light" id="theme-light">
+                            <span class="theme-radio"></span>
+                            <span>Light</span>
+                        </label>
+                    </div>
+                    <div class="range-label">
+                        <label for="interface-brightness">Độ sáng giao diện</label>
+                        <span id="interface-brightness-value">100%</span>
+                    </div>
+                    <input type="range" id="interface-brightness" min="0" max="100" value="100">
+                </section>
+                <section class="settings-section">
+                    <h3>Nền giao diện</h3>
+                    <div class="range-label">
+                        <label for="background-brightness">Độ sáng nền</label>
+                        <span id="background-brightness-value">100%</span>
+                    </div>
+                    <input type="range" id="background-brightness" min="0" max="100" value="100">
+                </section>
+                <section class="settings-section">
+                    <h3>Giọng nói</h3>
+                    <label class="toggle-row">
+                        <input type="checkbox" id="voice-mode-enabled" checked>
+                        <span class="toggle-track"></span>
+                        <span>Cho phép chế độ nói chuyện</span>
+                    </label>
+                    <label for="tts-voice-select">Giọng đọc</label>
+                    <select id="tts-voice-select"></select>
+                    <div class="range-label">
+                        <label for="tts-speed">Tốc độ đọc</label>
+                        <span id="tts-speed-val">1.0x</span>
+                    </div>
+                    <input type="range" id="tts-speed" min="0.5" max="2" step="0.1" value="1">
+                    <div class="range-label">
+                        <label for="tts-volume">Âm lượng</label>
+                        <span id="tts-volume-val">100%</span>
+                    </div>
+                    <input type="range" id="tts-volume" min="0" max="1" step="0.05" value="1">
+                    <label class="toggle-row">
+                        <input type="checkbox" id="auto-listen" checked>
+                        <span class="toggle-track"></span>
+                        <span>Tự động lắng nghe sau khi Starfly nói</span>
+                    </label>
+                </section>
+                <div class="settings-actions">
+                    <button type="button" id="reset-appearance-btn" class="reset-button">Đặt lại giao diện</button>
+                    <button type="button" id="save-settings-btn" class="save-button">Lưu cài đặt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="chat.js"></script>
+</body>
+</html>

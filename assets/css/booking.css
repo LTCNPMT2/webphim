@@ -1,0 +1,1006 @@
+/* =========================================================
+   STARFLY — BOOKING / TICKETS / MANAGEMENT
+   ========================================================= */
+
+.booking-modal {
+  width: min(980px, calc(100vw - 32px));
+  max-height: min(900px, calc(100vh - 32px));
+  overflow-y: auto;
+  padding: 34px;
+  border-radius: 28px;
+  background: rgba(12, 16, 30, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55);
+}
+
+.booking-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.booking-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.booking-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+.booking-header h2 {
+  margin: 5px 0 8px;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1;
+}
+
+.booking-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.booking-close,
+.modal-close {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font-size: 25px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.booking-close:hover,
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: rotate(90deg);
+}
+
+.booking-step {
+  margin-top: 18px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.booking-step h3 {
+  margin: 0 0 18px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* =========================
+   SHOWTIMES
+   ========================= */
+
+.showtime-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 12px;
+}
+
+.showtime-option {
+  min-height: 76px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.035);
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.showtime-option strong {
+  display: block;
+  font-size: 21px;
+  margin-bottom: 6px;
+}
+
+.showtime-option small {
+  display: block;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.showtime-option:hover,
+.showtime-option.selected {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* =========================
+   SEATS
+   ========================= */
+
+.seat-map {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(34px, 1fr));
+  gap: 9px;
+  max-width: 700px;
+  margin: 25px auto;
+}
+
+.seat {
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px 8px 12px 12px;
+  background: rgba(255, 255, 255, 0.055);
+  color: white;
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.seat:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.55);
+  transform: translateY(-2px);
+}
+
+.seat.selected {
+  background: white;
+  color: #080a12;
+  border-color: white;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
+}
+
+.seat.sold,
+.seat:disabled {
+  background: rgba(255, 255, 255, 0.015);
+  color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.05);
+  cursor: not-allowed;
+}
+
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+}
+
+.seat-legend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.seat-dot {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.seat-dot.selected {
+  background: white;
+}
+
+.seat-dot.sold {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* =========================
+   CUSTOMER FORM
+   ========================= */
+
+.customer-form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.customer-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.045);
+  color: white;
+  font: inherit;
+}
+
+.customer-form input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.customer-form input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* =========================
+   PAYMENT
+   ========================= */
+
+.payment-method {
+  display: inline-flex;
+  padding: 8px 12px;
+  margin-bottom: 15px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+}
+
+.payment-box {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 20px;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.payment-box img {
+  width: 190px;
+  height: 190px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: white;
+}
+
+.payment-box strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.payment-box p {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.payment-box small {
+  color: rgba(255, 255, 255, 0.8);
+  word-break: break-word;
+}
+
+.payment-box .booking-reference {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 11px 14px;
+  border: 1px solid rgba(216, 239, 114, 0.45);
+  border-radius: 10px;
+  background: rgba(216, 239, 114, 0.1);
+  color: var(--lime);
+  font: 700 13px/1.5 "Space Grotesk", sans-serif;
+  letter-spacing: 0.035em;
+}
+
+/* =========================
+   SUMMARY
+   ========================= */
+
+.booking-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.booking-summary span {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.booking-summary strong {
+  font-size: 20px;
+}
+
+.booking-submit {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.booking-message {
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 14px;
+}
+
+.booking-message.error {
+  color: #ff8d8d;
+}
+
+.booking-message.success {
+  color: #91e6ad;
+}
+
+.booking-message.pending {
+  color: #e7d68b;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+/* =========================
+   TICKETS
+   ========================= */
+
+.list-modal {
+  width: min(850px, calc(100vw - 32px));
+  max-height: min(800px, calc(100vh - 32px));
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: 26px;
+  background: rgba(12, 16, 30, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.list-modal h2 {
+  margin: 7px 0 25px;
+  font-size: 38px;
+}
+
+.tickets-list {
+  display: grid;
+  gap: 13px;
+}
+
+.ticket-card {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.ticket-card img {
+  width: 70px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.ticket-card h3 {
+  margin: 0 0 7px;
+}
+
+.ticket-card p {
+  margin: 0 0 7px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+}
+
+.ticket-card small {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ticket-card > strong {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* =========================
+   MANAGEMENT
+   ========================= */
+
+.management-section {
+  display: none;
+  padding: 40px 0 80px;
+}
+
+.management-section.show {
+  display: block;
+}
+
+.management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.management-header h2 {
+  margin: 5px 0 0;
+  font-size: 38px;
+}
+
+.management-tools {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.management-tools input,
+.management-tools select {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.management-tools option {
+  background: #101321;
+}
+
+.management-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+
+.management-tab {
+  padding: 10px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+
+.management-tab:hover,
+.management-tab.active {
+  background: white;
+  color: #080a12;
+}
+
+.management-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.management-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+}
+
+.management-table th,
+.management-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.management-table th {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.management-table td {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+}
+
+.management-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+}
+
+/* =========================
+   BẮP & NƯỚC / COMBO
+   ========================= */
+
+.booking-step h3 span {
+  float: right;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.food-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+  gap: 12px;
+}
+
+.food-card {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.035);
+  transition: 0.22s ease;
+}
+
+.food-card.selected {
+  border-color: rgba(216, 239, 114, 0.55);
+  background: rgba(216, 239, 114, 0.09);
+  transform: translateY(-2px);
+}
+
+.food-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 22px;
+}
+
+.food-info strong {
+  display: block;
+  font-size: 13px;
+}
+
+.food-info small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.food-price {
+  display: block;
+  margin-top: 6px;
+  color: var(--lime);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.food-qty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.food-qty > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.food-qty button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.food-qty button:hover {
+  border-color: var(--lime);
+  color: var(--lime);
+}
+
+.food-qty span {
+  min-width: 24px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.food-qty small {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+}
+
+.food-hint {
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+}
+
+.food-empty {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+}
+
+/* =========================
+   CHI TIẾT THANH TOÁN
+   ========================= */
+
+.payment-details {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.payment-details div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 13px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+  font-size: 12px;
+}
+
+.payment-details span {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.payment-details strong {
+  color: #fff;
+  font-weight: 600;
+  text-align: right;
+}
+
+.payment-details code {
+  color: var(--lime);
+  font: 600 12px "Space Grotesk", monospace;
+  letter-spacing: 0.06em;
+}
+
+.payment-warn {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 199, 96, 0.35);
+  border-radius: 12px;
+  background: rgba(255, 199, 96, 0.08);
+  color: #ffd79a;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.booking-breakdown {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+}
+
+/* Nút đóng nằm gọn trong panel (trước đây bị đẩy ra ngoài khung) */
+.booking-modal,
+.list-modal,
+.admin-form {
+  position: relative;
+}
+
+.booking-modal > .modal-close,
+.list-modal > .modal-close,
+.admin-form > .modal-close {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+}
+
+/* =========================
+   ADMIN — TOOLBAR / BẢNG DỮ LIỆU
+   ========================= */
+
+.management-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.management-toolbar input,
+.management-toolbar select {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font: inherit;
+}
+
+.management-toolbar input {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.management-toolbar option {
+  background: #101321;
+}
+
+.management-toolbar input:focus,
+.management-toolbar select:focus {
+  border-color: rgba(216, 239, 114, 0.45);
+}
+
+.management-add,
+.management-bulk,
+.management-refresh {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(216, 239, 114, 0.4);
+  border-radius: 10px;
+  background: rgba(216, 239, 114, 0.12);
+  color: var(--lime);
+  font: 600 12px "DM Sans", sans-serif;
+  cursor: pointer;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.22s ease;
+}
+
+.management-refresh {
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.management-add:hover,
+.management-bulk:hover,
+.management-refresh:hover {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: #12180d;
+  transform: translateY(-1px);
+}
+
+.management-tab {
+  white-space: nowrap;
+}
+
+.management-actions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.management-actions button {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.management-actions button:hover {
+  border-color: var(--lime);
+  color: var(--lime);
+}
+
+.management-actions button.danger:hover {
+  border-color: #ff8d8d;
+  color: #ff9a9a;
+}
+
+.management-inline-select {
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.management-inline-select option {
+  background: #101321;
+}
+
+.management-table td.poster-cell img {
+  width: 40px;
+  height: 58px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.management-empty {
+  padding: 30px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+}
+
+.management-count {
+  color: var(--lime);
+}
+
+/* =========================
+   ADMIN — FORM THÊM / SỬA
+   ========================= */
+
+.admin-form {
+  width: min(660px, calc(100vw - 32px));
+  max-height: min(880px, calc(100vh - 32px));
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: 26px;
+  background: rgba(12, 16, 30, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55);
+}
+
+.admin-form-header h2,
+.admin-form h2 {
+  margin: 6px 0 22px;
+  font: 500 clamp(24px, 3vw, 32px) "Space Grotesk", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.admin-form-body {
+  display: grid;
+  gap: 13px;
+}
+
+.admin-field {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-field label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.045);
+  color: #fff;
+  font: inherit;
+}
+
+.admin-field textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
+  border-color: rgba(216, 239, 114, 0.45);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.admin-field option {
+  background: #101321;
+}
+
+.admin-field-hint {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 11px;
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.admin-form .booking-message {
+  margin-top: 14px;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 720px) {
+  .booking-modal,
+  .list-modal {
+    width: calc(100vw - 18px);
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .customer-form {
+    grid-template-columns: 1fr;
+  }
+
+  .seat-map {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 7px;
+  }
+
+  .payment-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .payment-box img {
+    width: 160px;
+    height: 160px;
+  }
+
+  .ticket-card {
+    grid-template-columns: 55px 1fr;
+  }
+
+  .ticket-card img {
+    width: 55px;
+    height: 75px;
+  }
+
+  .ticket-card > strong {
+    grid-column: 2;
+  }
+
+  .management-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.payment-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.payment-choice > span {
+  flex-basis: 100%;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.payment-choice label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.payment-choice input {
+  accent-color: var(--lime);
+}
+
+.account-button {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Booking uses the signed-in account profile; don't ask customers to re-enter it. */
+.customer-form {
+  display: none !important;
+}
