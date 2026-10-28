@@ -1,0 +1,16 @@
+{
+  "name": "movie-booking-root",
+  "version": "1.0.0",
+  "description": "Root wrapper to run backend and frontend commands easily",
+  "scripts": {
+    "dev": "npm --prefix backend run dev",
+    "backend:dev": "npm --prefix backend run dev",
+    "backend:start": "npm --prefix backend start",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "reset:demo-passwords": "npm --prefix backend run reset:demo-passwords",
+    "test:phase4": "powershell -ExecutionPolicy Bypass -File backend/scripts/test-phase4.ps1",
+    "test:phase8": "powershell -ExecutionPolicy Bypass -File backend/scripts/test-phase8.ps1",
+    "test:race": "node backend/scripts/raceTest.js"
+  }
+}

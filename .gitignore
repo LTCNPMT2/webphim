@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Production builds
+dist/
+frontend/dist/
+
+# Environment files (NEVER commit secrets/credentials)
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# Uploads / Dynamic media
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/posters/
+backend/uploads/posters/*
+!backend/uploads/posters/.gitkeep
+
+# Logs & temp files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.temp/
+.tmp/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
