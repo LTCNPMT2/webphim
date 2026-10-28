@@ -4,7 +4,7 @@ import { assetUrl, formatDate, formatRating } from '../../utils/format.js';
 import { AGE_COLORS } from '../../utils/constants.js';
 import Skeleton from '../ui/Skeleton.jsx';
 
-export default function BannerSlider({ movies = [], loading, interval = 6000 }) {
+export default function BannerSlider({ movies = [], loading, interval = 6000, onBookMovie }) {
   const slides = movies.filter((m) => m.banner_url || m.poster_url).slice(0, 5);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -89,13 +89,14 @@ export default function BannerSlider({ movies = [], loading, interval = 6000 }) 
 
             {/* Các nút hành động */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link
-                to={`/movies/${movie.id}`}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-pink-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition hover:from-brand-500 hover:to-pink-500 hover:scale-105"
+              <button
+                type="button"
+                onClick={() => onBookMovie?.(movie)}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-pink-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/30 transition hover:from-brand-500 hover:to-pink-500 hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>🎟️</span>
                 <span>Đặt vé ngay</span>
-              </Link>
+              </button>
               <Link
                 to={`/movies/${movie.id}`}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 backdrop-blur px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20 hover:border-white/40"

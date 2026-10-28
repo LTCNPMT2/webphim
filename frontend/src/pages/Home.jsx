@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch.js';
-import { getMovies } from '../services/catalogService.js';
+import { getMovies, getShowtimes } from '../services/catalogService.js';
+import { formatTime, toDateKey } from '../utils/format.js';
 import BannerSlider from '../components/movie/BannerSlider.jsx';
 import MovieSectionSlider from '../components/movie/MovieSectionSlider.jsx';
 import CinemaShowtimesWidget from '../components/movie/CinemaShowtimesWidget.jsx';
 import TrailerModal from '../components/movie/TrailerModal.jsx';
+import MoMoBookingModal from '../components/booking/MoMoBookingModal.jsx';
 
 export default function Home() {
   const [trailerMovie, setTrailerMovie] = useState(null);
+  const [bookingModalData, setBookingModalData] = useState(null);
 
   // Phim chiếu banner và phim đang chiếu (hiển thị kèm thứ hạng Top 1, 2, 3...)
   const nowShowing = useFetch(() => getMovies({ status: 'now_showing', limit: 12 }), []);
@@ -16,12 +19,84 @@ export default function Home() {
   // Phim sắp chiếu
   const comingSoon = useFetch(() => getMovies({ status: 'coming_soon', limit: 12 }), []);
 
+  // Bấm "Đặt vé ngay" trên Banner -> Mở ngay dãy ghế ngồi
+  const handleBookMovie = async (movie) => {
+    if (!movie) return;
+    try {
+      const todayKey = toDateKey(new Date());
+      const res = await getShowtimes({ movie_id: movie.id, date: todayKey });
+      let chosenShowtime = null;
+      let chosenCinema = null;
+
+      if (Array.isArray(res) && res.length > 0) {
+        for (const cg of res) {
+          if (cg.showtimes && cg.showtimes.length > 0) {
+            chosenShowtime = cg.showtimes[0];
+            chosenCinema = cg.cinema;
+            break;
+          }
+        }
+      }
+
+      if (chosenShowtime) {
+        const start = new Date(chosenShowtime.start_time);
+        const end = new Date(chosenShowtime.end_time || start.getTime() + (chosenShowtime.duration_minutes || 110) * 60000);
+        setBookingModalData({
+          movie,
+          showtime: {
+            id: chosenShowtime.id,
+            startTimeStr: formatTime(start),
+            endTimeStr: formatTime(end),
+            basePrice: chosenShowtime.base_price,
+            roomName: chosenShowtime.room_name,
+            roomType: chosenShowtime.room_type,
+          },
+          cinema: chosenCinema,
+        });
+      } else {
+        // Fallback: Nếu hôm nay chưa có suất trong DB, mở ngay sơ đồ chọn dãy ghế
+        setBookingModalData({
+          movie,
+          showtime: {
+            id: `quick-${movie.id}`,
+            startTimeStr: '19:30',
+            endTimeStr: '21:30',
+            basePrice: 90000,
+            roomName: 'Phòng 1 (2D Chuẩn)',
+            roomType: '2D Chuẩn',
+          },
+          cinema: {
+            name: 'Cinema Sài Gòn Center',
+            address: '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+          },
+        });
+      }
+    } catch {
+      setBookingModalData({
+        movie,
+        showtime: {
+          id: `quick-${movie.id}`,
+          startTimeStr: '19:30',
+          endTimeStr: '21:30',
+          basePrice: 90000,
+          roomName: 'Phòng 1 (2D Chuẩn)',
+          roomType: '2D Chuẩn',
+        },
+        cinema: {
+          name: 'Cinema Sài Gòn Center',
+          address: '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+        },
+      });
+    }
+  };
+
   return (
     <div className="space-y-14 pb-12">
       {/* 1. Hero Banner Slider */}
       <BannerSlider
         movies={nowShowing.data?.items?.slice(0, 5)}
         loading={nowShowing.loading}
+        onBookMovie={handleBookMovie}
       />
 
       {/* 2. Dải Tiện ích & Ưu điểm CineBooking */}
@@ -136,6 +211,15 @@ export default function Home() {
           onClose={() => setTrailerMovie(null)}
         />
       )}
+
+      {/* Modal Đặt vé xem phim chuẩn MoMo 3 bước - Chọn dãy ghế trực tiếp */}
+      <MoMoBookingModal
+        open={Boolean(bookingModalData)}
+        onClose={() => setBookingModalData(null)}
+        showtime={bookingModalData?.showtime}
+        movie={bookingModalData?.movie}
+        cinema={bookingModalData?.cinema}
+      />
     </div>
   );
 }

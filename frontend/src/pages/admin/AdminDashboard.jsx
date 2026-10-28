@@ -110,7 +110,7 @@ export function DashboardView({ stats, days, onDaysChange }) {
         <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-sm text-indigo-200 flex items-center gap-3">
           <span className="text-xl">💡</span>
           <div>
-            Chưa có đơn đặt vé nào được thanh toán nên biểu đồ chưa hiển thị số liệu. Hãy nạp file <b>database/movie_sales.sql</b> để có đầy đủ dữ liệu đặt vé.
+            Chưa có đơn đặt vé nào được thanh toán nên biểu đồ chưa hiển thị số liệu. Hãy chạy file <b>database/demo_sales.sql</b> để nạp 48 đơn hàng mẫu.
           </div>
         </div>
       )}

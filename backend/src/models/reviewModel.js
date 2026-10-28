@@ -3,7 +3,7 @@ const { pool } = require('../config/db');
 // limit/offset đã được ép kiểu số nguyên ở parsePagination nên nối vào SQL là an toàn
 exports.list = async (movieId, { limit, offset }) => {
   const [rows] = await pool.execute(
-    `SELECT r.id, r.rating, r.comment, r.created_at, u.id AS user_id, u.full_name
+    `SELECT r.id, r.rating, r.comment, r.created_at, u.id AS user_id, u.full_name, u.full_name AS user_name, u.avatar_url
      FROM reviews r JOIN users u ON u.id = r.user_id
      WHERE r.movie_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT ${limit} OFFSET ${offset}`,
     [movieId]

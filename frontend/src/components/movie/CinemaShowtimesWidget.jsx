@@ -59,7 +59,7 @@ const CINE_BRANCHES = [
     roomName: 'Phòng 1',
     roomTypeName: '2D Chuẩn',
     roomType: '2D',
-    seatsCount: 44,
+    seatsCount: 75,
     tag: '2D TIÊU CHUẨN',
     address: 'Tầng 5 | Tràng Tiền Plaza, 25 Tràng Tiền, P. Tràng Tiền, Hoàn Kiếm',
     city: 'Hà Nội',
@@ -75,7 +75,7 @@ const CINE_BRANCHES = [
     roomName: 'Phòng 2 (3D)',
     roomTypeName: '3D Kỹ Thuật Số',
     roomType: '3D',
-    seatsCount: 44,
+    seatsCount: 75,
     tag: '3D SIÊU THỰC',
     address: 'Tầng 5 | Tràng Tiền Plaza, 25 Tràng Tiền, P. Tràng Tiền, Hoàn Kiếm',
     city: 'Hà Nội',
@@ -215,11 +215,38 @@ export default function CinemaShowtimesWidget() {
     const moviesMap = new Map();
     const availableMovies = dbMoviesFetch.data?.items || [];
 
+    // Xác định định dạng phòng chiếu đang được kích hoạt:
+    // Nếu chọn tab lọc cụ thể ('2D', 'IMAX', '3D') -> dùng selectedRoomType
+    // Nếu chọn 'all' -> lấy theo roomType của phòng chiếu đang chọn (currentCinema.roomType)
+    const activeRoomType = selectedRoomType !== 'all'
+      ? selectedRoomType
+      : (currentCinema?.roomType || '2D');
+
     // 1. Kiểm tra nếu rạp này có suất chiếu trong Database
     if (dbShowtimesFetch.data && currentCinema?.realId) {
       const cinemaGroup = dbShowtimesFetch.data.find((g) => g.cinema.id === currentCinema.realId);
       if (cinemaGroup && cinemaGroup.showtimes.length > 0) {
-        cinemaGroup.showtimes.forEach((st) => {
+        // Lọc các suất chiếu theo đúng định dạng phòng được chọn (IMAX / 3D / 2D)
+        const formatFiltered = cinemaGroup.showtimes.filter((st) => {
+          const stType = (st.room_type || '2D').toUpperCase();
+          if (activeRoomType === 'IMAX') return stType.includes('IMAX');
+          if (activeRoomType === '3D') return stType.includes('3D');
+          if (activeRoomType === '2D') return !stType.includes('IMAX') && !stType.includes('3D');
+          return true;
+        });
+
+        // Nếu phòng cụ thể đang chọn có suất chiếu đúng định dạng thì ưu tiên phòng đó
+        const roomFiltered = formatFiltered.filter((st) => st.room_id === currentCinema.realRoomId);
+        const targetShowtimes = roomFiltered.length > 0 ? roomFiltered : formatFiltered;
+
+        targetShowtimes.forEach((st) => {
+          const formatLabel =
+            st.room_type === 'IMAX'
+              ? 'IMAX Laser'
+              : st.room_type === '3D'
+                ? '3D Kỹ Thuật Số'
+                : '2D Chuẩn';
+
           if (!moviesMap.has(st.movie_id)) {
             moviesMap.set(st.movie_id, {
               movieId: st.movie_id,
@@ -228,7 +255,7 @@ export default function CinemaShowtimesWidget() {
               duration: st.duration_minutes || 110,
               age_rating: st.age_rating || 'T13',
               genres: st.genres || 'Hành Động, Hài, Phiêu Lưu',
-              room_type: st.room_type || '2D Phụ đề',
+              room_type: formatLabel,
               showtimes: [],
             });
           }
@@ -243,12 +270,13 @@ export default function CinemaShowtimesWidget() {
             available: st.available_seats > 0,
             basePrice: st.base_price,
             roomName: st.room_name,
+            roomType: formatLabel,
           });
         });
       }
     }
 
-    // 2. Nếu rạp chưa có suất thật -> sinh lịch chiếu sống động cho các phim hiện có trong hệ thống CINE
+    // 2. Nếu rạp chưa có suất thật -> sinh lịch chiếu sống động theo đúng định dạng (IMAX / 3D / 2D)
     if (moviesMap.size === 0 && availableMovies.length > 0) {
       const sampleMovies = availableMovies.slice(0, 3);
       const timeSlotsMatrix = [
@@ -274,6 +302,20 @@ export default function CinemaShowtimesWidget() {
         ],
       ];
 
+      const formatLabel =
+        activeRoomType === 'IMAX'
+          ? 'IMAX Laser'
+          : activeRoomType === '3D'
+            ? '3D Kỹ Thuật Số'
+            : '2D Chuẩn';
+
+      const basePrice =
+        activeRoomType === 'IMAX'
+          ? 140000
+          : activeRoomType === '3D'
+            ? 110000
+            : 90000;
+
       sampleMovies.forEach((m, idx) => {
         const slots = timeSlotsMatrix[idx % timeSlotsMatrix.length];
         moviesMap.set(m.id, {
@@ -283,21 +325,22 @@ export default function CinemaShowtimesWidget() {
           duration: m.duration_minutes || 115,
           age_rating: m.age_rating || (idx === 1 ? '18+' : '13+'),
           genres: (m.genres || []).map((g) => g.name).join(', ') || 'Hài, Hoạt Hình, Phiêu Lưu, Hành Động',
-          room_type: idx === 1 ? '2D Phụ đề' : '2D Lồng tiếng',
+          room_type: formatLabel,
           showtimes: slots.map((s, slotIdx) => ({
-            id: `cine-${m.id}-${slotIdx}`,
+            id: `cine-${m.id}-${activeRoomType}-${slotIdx}`,
             startTimeStr: s.start,
             endTimeStr: s.end,
             available: true,
-            basePrice: 90000,
-            roomName: 'Cinema ' + (idx + 1),
+            basePrice,
+            roomName: currentCinema?.roomName || `${activeRoomType} Cinema`,
+            roomType: formatLabel,
           })),
         });
       });
     }
 
     return Array.from(moviesMap.values());
-  }, [dbShowtimesFetch.data, currentCinema, dbMoviesFetch.data]);
+  }, [dbShowtimesFetch.data, currentCinema, dbMoviesFetch.data, selectedRoomType]);
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8 px-2 sm:px-4 font-sans">
@@ -512,6 +555,9 @@ export default function CinemaShowtimesWidget() {
                 <span>{currentCinema?.name}</span>
                 <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[9px] font-bold text-[#d82d8b]">
                   {currentCinema?.city}
+                </span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700 uppercase">
+                  {currentCinema?.tag || currentCinema?.roomTypeName || currentCinema?.roomType}
                 </span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">

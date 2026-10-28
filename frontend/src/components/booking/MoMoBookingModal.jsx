@@ -121,56 +121,70 @@ export default function MoMoBookingModal({
   const vipSurcharge = 20000;
   const coupleSurcharge = 40000;
 
-  // Lưới ghế mô phỏng y hệt ảnh số 1
+  // Lưới ghế chuẩn 75 ghế (30 Thường, 40 VIP, 5 Ghế đôi Sweetbox)
   const gridRows = useMemo(() => {
+    // Nếu có dữ liệu ghế thật từ API (75 ghế từ DB)
+    if (seatMapData && Array.isArray(seatMapData) && seatMapData.length > 0) {
+      const map = new Map();
+      const sorted = [...seatMapData].sort(
+        (a, b) => a.row_label.localeCompare(b.row_label) || a.seat_number - b.seat_number
+      );
+      sorted.forEach((seat) => {
+        const rowKey = seat.row_label;
+        if (!map.has(rowKey)) {
+          map.set(rowKey, {
+            label: rowKey,
+            type: seat.seat_type,
+            seats: [],
+          });
+        }
+        const rowObj = map.get(rowKey);
+        if (seat.seat_type === 'couple') rowObj.type = 'couple';
+        else if (seat.seat_type === 'vip' && rowObj.type !== 'couple') rowObj.type = 'vip';
+
+        const seatCode = `${seat.row_label}${seat.seat_number}`;
+        const isCenter = ['D', 'E', 'F', 'G'].includes(seat.row_label) && seat.seat_number >= 3 && seat.seat_number <= 8;
+
+        rowObj.seats.push({
+          id: seatCode,
+          dbId: seat.id,
+          num: seat.seat_number,
+          type: seat.seat_type,
+          isCenter,
+          price: seat.price || (basePrice + (seat.seat_type === 'vip' ? vipSurcharge : seat.seat_type === 'couple' ? coupleSurcharge : 0)),
+          status: seat.status || 'available',
+        });
+      });
+      return [...map.values()];
+    }
+
+    // Fallback: Đúng chuẩn 75 ghế (A, B, C: 10 thường; D, E, F, G: 10 VIP; H: 5 Sweetbox)
     const rows = [];
-    // Hàng A, B, C: Ghế thường (màu tím)
-    rows.push({
-      label: 'A',
-      type: 'standard',
-      seats: Array.from({ length: 11 }, (_, i) => ({
-        id: `A${11 - i}`,
-        num: 11 - i,
+    ['A', 'B', 'C'].forEach((label) => {
+      rows.push({
+        label,
         type: 'standard',
-        price: basePrice,
-        status: 'available',
-      })),
-    });
-    rows.push({
-      label: 'B',
-      type: 'standard',
-      seats: Array.from({ length: 12 }, (_, i) => ({
-        id: `B${12 - i}`,
-        num: 12 - i,
-        type: 'standard',
-        price: basePrice,
-        status: 'available',
-      })),
-    });
-    rows.push({
-      label: 'C',
-      type: 'standard',
-      seats: Array.from({ length: 12 }, (_, i) => ({
-        id: `C${12 - i}`,
-        num: 12 - i,
-        type: 'standard',
-        price: basePrice,
-        status: 'available',
-      })),
+        seats: Array.from({ length: 10 }, (_, i) => {
+          const num = i + 1;
+          return {
+            id: `${label}${num}`,
+            num,
+            type: 'standard',
+            price: basePrice,
+            status: 'available',
+          };
+        }),
+      });
     });
 
-    // Hàng D, E, F, G, H, J: Ghế VIP (màu đỏ)
-    const vipLabels = ['D', 'E', 'F', 'G', 'H', 'J'];
-    vipLabels.forEach((label) => {
+    ['D', 'E', 'F', 'G'].forEach((label) => {
       rows.push({
         label,
         type: 'vip',
-        seats: Array.from({ length: 12 }, (_, i) => {
-          const num = 12 - i;
-          // Một số ghế đã đặt theo ảnh mẫu (F4, F5, J5, J6)
-          const isTaken = (label === 'F' && (num === 4 || num === 5)) || (label === 'J' && (num === 5 || num === 6));
-          // Vùng trung tâm: các hàng D, E, F, G từ cột 4 đến 9
-          const isCenter = ['D', 'E', 'F', 'G'].includes(label) && num >= 4 && num <= 9;
+        seats: Array.from({ length: 10 }, (_, i) => {
+          const num = i + 1;
+          const isTaken = (label === 'F' && (num === 4 || num === 5));
+          const isCenter = num >= 3 && num <= 8;
           return {
             id: `${label}${num}`,
             num,
@@ -183,24 +197,27 @@ export default function MoMoBookingModal({
       });
     });
 
-    // Hàng K: Ghế Sweetbox đôi (màu hồng)
     rows.push({
-      label: 'K',
+      label: 'H',
       type: 'couple',
-      seats: [
-        { id: 'K16-K15', num: 'K16 K15', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K14-K13', num: 'K14 K13', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K12-K11', num: 'K12 K11', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K10-K9', num: 'K10 K9', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K8-K7', num: 'K8 K7', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K6-K5', num: 'K6 K5', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K4-K3', num: 'K4 K3', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-        { id: 'K2-K1', num: 'K2 K1', type: 'couple', price: basePrice * 2 + coupleSurcharge, status: 'available' },
-      ],
+      seats: Array.from({ length: 5 }, (_, i) => {
+        const num = i + 1;
+        return {
+          id: `H${num}`,
+          num,
+          type: 'couple',
+          price: basePrice + coupleSurcharge,
+          status: 'available',
+        };
+      }),
     });
 
     return rows;
-  }, [basePrice]);
+  }, [seatMapData, basePrice, vipSurcharge, coupleSurcharge]);
+
+  const standardRows = useMemo(() => gridRows.filter((r) => ['A', 'B', 'C'].includes(r.label)), [gridRows]);
+  const vipRows = useMemo(() => gridRows.filter((r) => ['D', 'E', 'F', 'G'].includes(r.label)), [gridRows]);
+  const coupleRows = useMemo(() => gridRows.filter((r) => r.label === 'H' || r.type === 'couple'), [gridRows]);
 
   // Click chọn hoặc bỏ chọn ghế
   const toggleSeat = (seat) => {
@@ -299,7 +316,7 @@ export default function MoMoBookingModal({
 
       // Chuẩn bị payload tạo đơn thật vào MySQL
       const realShowtimeId = Number(showtime?.id) > 0 ? Number(showtime.id) : 1;
-      const seatIds = selectedSeats.map((_, idx) => idx + 1); // fallback seat IDs
+      const seatIds = selectedSeats.map((s, idx) => s.dbId || (idx + 1));
       const combosPayload = Object.entries(selectedCombos).map(([id, qty]) => ({
         combo_id: Number(id),
         quantity: qty,
@@ -392,7 +409,10 @@ export default function MoMoBookingModal({
           poster_url: movie?.poster_url,
           duration_minutes: movie?.duration_minutes || 115,
         },
-        room: { name: showtime?.roomName || 'Cinema 8', room_type: '2D Phụ đề' },
+        room: {
+          name: showtime?.roomName || 'Cinema 1',
+          room_type: showtime?.roomType || movie?.room_type || '2D Chuẩn',
+        },
         showtime: { start_time: showtime?.time ? `${new Date().toISOString().split('T')[0]}T${showtime.time}:00` : new Date().toISOString() },
         user: {
           full_name: user?.full_name || 'Khách hàng',
@@ -539,28 +559,15 @@ export default function MoMoBookingModal({
             {/* Khung chứa các hàng ghế */}
             <div className="relative inline-block max-w-full overflow-x-auto pb-4">
               
-              {/* Khung viền xanh lá: Vùng trung tâm (bao quanh hàng D..G, cột 4..9) */}
-              <div
-                className="pointer-events-none absolute border-2 border-emerald-400 rounded-lg"
-                style={{
-                  top: '112px',
-                  bottom: '86px',
-                  left: '116px',
-                  right: '116px',
-                }}
-              />
-
               <div className="space-y-2">
-                {gridRows.map((row) => (
+                {/* Hàng A, B, C: Ghế thường (màu tím) */}
+                {standardRows.map((row) => (
                   <div key={row.label} className="flex items-center justify-center gap-1.5 sm:gap-2">
                     {row.seats.map((seat) => {
                       const isSelected = selectedSeats.some((s) => s.id === seat.id);
-                      const isBooked = seat.status === 'booked';
+                      const isBooked = seat.status === 'booked' || seat.status === 'holding';
 
-                      // Màu sắc chuẩn theo loại ghế trong ảnh
                       let btnColor = 'bg-[#673ab7] hover:bg-[#7e57c2]'; // Ghế thường (Tím)
-                      if (seat.type === 'vip') btnColor = 'bg-[#e53935] hover:bg-[#ef5350]'; // Ghế VIP (Đỏ)
-                      if (seat.type === 'couple') btnColor = 'bg-[#d82d8b] hover:bg-[#ec407a]'; // Ghế Sweetbox (Hồng)
                       if (isBooked) btnColor = 'bg-[#3f3f46] text-slate-500 cursor-not-allowed'; // Đã đặt (Xám)
                       if (isSelected) btnColor = 'bg-[#ff007f] ring-2 ring-white scale-105 shadow-md'; // Đang chọn
 
@@ -570,10 +577,67 @@ export default function MoMoBookingModal({
                           type="button"
                           disabled={isBooked}
                           onClick={() => toggleSeat(seat)}
-                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 ${
-                            seat.type === 'couple' ? 'w-14 sm:w-16 h-7 sm:h-8' : 'w-6 sm:w-7 h-6 sm:h-7'
-                          } ${btnColor}`}
-                          title={`${seat.id} - ${formatPrice(seat.price)}`}
+                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-6 sm:w-7 h-6 sm:h-7 ${btnColor}`}
+                          title={`${seat.id} · Ghế thường · ${formatPrice(seat.price)}`}
+                        >
+                          {seat.id}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+
+                {/* Hàng D, E, F, G: Ghế VIP (màu đỏ) kèm khung viền Vùng trung tâm */}
+                <div className="relative space-y-2 py-0.5">
+                  <div
+                    className="pointer-events-none absolute -inset-y-1 left-1/2 -translate-x-1/2 w-[184px] sm:w-[220px] border-2 border-emerald-400 rounded-lg shadow-[0_0_12px_rgba(52,211,153,0.3)] z-10"
+                  />
+                  {vipRows.map((row) => (
+                    <div key={row.label} className="flex items-center justify-center gap-1.5 sm:gap-2">
+                      {row.seats.map((seat) => {
+                        const isSelected = selectedSeats.some((s) => s.id === seat.id);
+                        const isBooked = seat.status === 'booked' || seat.status === 'holding';
+
+                        let btnColor = 'bg-[#e53935] hover:bg-[#ef5350]'; // Ghế VIP (Đỏ)
+                        if (isBooked) btnColor = 'bg-[#3f3f46] text-slate-500 cursor-not-allowed'; // Đã đặt (Xám)
+                        if (isSelected) btnColor = 'bg-[#ff007f] ring-2 ring-white scale-105 shadow-md'; // Đang chọn
+
+                        return (
+                          <button
+                            key={seat.id}
+                            type="button"
+                            disabled={isBooked}
+                            onClick={() => toggleSeat(seat)}
+                            className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-6 sm:w-7 h-6 sm:h-7 ${btnColor}`}
+                            title={`${seat.id} · Ghế VIP · ${formatPrice(seat.price)}`}
+                          >
+                            {seat.id}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Hàng H: Ghế đôi / Sweetbox (màu hồng) */}
+                {coupleRows.map((row) => (
+                  <div key={row.label} className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    {row.seats.map((seat) => {
+                      const isSelected = selectedSeats.some((s) => s.id === seat.id);
+                      const isBooked = seat.status === 'booked' || seat.status === 'holding';
+
+                      let btnColor = 'bg-[#d82d8b] hover:bg-[#ec407a]'; // Ghế Sweetbox (Hồng)
+                      if (isBooked) btnColor = 'bg-[#3f3f46] text-slate-500 cursor-not-allowed'; // Đã đặt (Xám)
+                      if (isSelected) btnColor = 'bg-[#ff007f] ring-2 ring-white scale-105 shadow-md'; // Đang chọn
+
+                      return (
+                        <button
+                          key={seat.id}
+                          type="button"
+                          disabled={isBooked}
+                          onClick={() => toggleSeat(seat)}
+                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-14 sm:w-16 h-7 sm:h-8 ${btnColor}`}
+                          title={`${seat.id} · Ghế đôi Sweetbox · ${formatPrice(seat.price)}`}
                         >
                           {seat.id}
                         </button>
@@ -633,7 +697,7 @@ export default function MoMoBookingModal({
                 </span>
               </div>
               <p className="text-xs text-amber-600 font-medium">
-                {showtime?.startTimeStr || '13:40'} ~ {showtime?.endTimeStr || '15:55'} · Hôm nay · {showtime?.roomName || 'Cinema 8'} · 2D Phụ đề
+                {showtime?.startTimeStr || '13:40'} ~ {showtime?.endTimeStr || '15:55'} · Hôm nay · {showtime?.roomName || 'Cinema 8'} · {showtime?.roomType || movie?.room_type || '2D Chuẩn'}
               </p>
               <div className="text-xs text-slate-700">
                 <span className="text-slate-500">Chỗ ngồi: </span>
@@ -866,7 +930,7 @@ export default function MoMoBookingModal({
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400">ĐỊNH DẠNG</span>
-                    <p className="font-bold text-slate-800 mt-0.5">2D Phụ đề</p>
+                    <p className="font-bold text-slate-800 mt-0.5">{showtime?.roomType || movie?.room_type || '2D Chuẩn'}</p>
                   </div>
                 </div>
 
@@ -1054,7 +1118,7 @@ export default function MoMoBookingModal({
                     ĐÃ THANH TOÁN
                   </span>
                   <span className="text-[11px] font-medium text-slate-500">
-                    {showtime?.roomName || 'Cinema 8'} (2D Phụ đề)
+                    {showtime?.roomName || 'Cinema 8'} ({showtime?.roomType || movie?.room_type || '2D Chuẩn'})
                   </span>
                 </div>
               </div>

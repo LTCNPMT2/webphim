@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useFetch } from '../hooks/useFetch.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { getMovie, getMovies, getCinemas, getShowtimes, getReviews, saveReview, deleteMyReview, getMyReview } from '../services/catalogService.js';
-import { assetUrl, formatDate, formatPrice, formatRating, formatTime, toDateKey } from '../utils/format.js';
+import { assetUrl, formatDate, formatDateTime, formatPrice, formatRating, formatTime, toDateKey } from '../utils/format.js';
 import { AGE_COLORS, AGE_LABELS, STATUS_LABELS } from '../utils/constants.js';
 import { getYoutubeEmbedUrl } from '../utils/youtube.js';
 import StarRating from '../components/ui/StarRating.jsx';
@@ -12,6 +12,7 @@ import Skeleton from '../components/ui/Skeleton.jsx';
 import ErrorState from '../components/ui/ErrorState.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import Button, { buttonClass } from '../components/ui/Button.jsx';
+import MoMoBookingModal from '../components/booking/MoMoBookingModal.jsx';
 
 // Danh sách tag cảm xúc đánh giá mô phỏng theo app xem phim
 const REVIEW_TAGS = ['Khóc trôi rạp', 'Cười banh rạp', 'Hài hước', 'Tuyệt vời', 'Hài lòng', 'Cảm động', 'Kịch tính'];
@@ -73,6 +74,7 @@ export default function MovieDetail() {
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
   const [showFullIntro, setShowFullIntro] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [bookingModalData, setBookingModalData] = useState(null);
 
   // Tải danh sách suất chiếu theo ngày và rạp
   const showtimesFetch = useFetch(
@@ -168,8 +170,9 @@ export default function MovieDetail() {
 
   const embedUrl = getYoutubeEmbedUrl(movie.trailer_url);
   const backdrop = movie.banner_url || movie.poster_url;
-  const ratingScore = formatRating(movie.rating_avg, '9.6');
-  const ratingCount = movie.rating_count ? Number(movie.rating_count).toLocaleString() : '51.442';
+  const totalReviews = Number(reviewsFetch.data?.pagination?.total ?? movie.rating_count) || 0;
+  const ratingScore = totalReviews > 0 ? formatRating(reviewsFetch.data?.summary?.average ?? movie.rating_avg, '0.0') : 'Chưa có';
+  const ratingCount = totalReviews.toLocaleString();
 
   // Dữ liệu diễn viên (nếu DB chưa có cast_data thì tự sinh mô phỏng đẹp như screenshot)
   const castList = (movie.cast_data && movie.cast_data.length > 0)
@@ -205,6 +208,35 @@ export default function MovieDetail() {
     if (selectedCity === 'all') return true;
     return item.cinema.city?.toLowerCase().includes(selectedCity.toLowerCase());
   });
+
+  const handleQuickBook = () => {
+    let foundSt = null;
+    let foundCinema = null;
+    for (const c of filteredShowtimesCinemas) {
+      if (c.showtimes && c.showtimes.length > 0) {
+        foundSt = c.showtimes.find((s) => s.available_seats == null || s.available_seats > 0) || c.showtimes[0];
+        foundCinema = c.cinema;
+        break;
+      }
+    }
+
+    if (foundSt) {
+      setBookingModalData({
+        showtime: {
+          id: foundSt.id,
+          startTimeStr: formatTime(foundSt.start_time),
+          endTimeStr: formatTime(foundSt.end_time),
+          basePrice: foundSt.base_price,
+          roomName: foundSt.room_name,
+          roomType: foundSt.room_type,
+        },
+        movie,
+        cinema: foundCinema,
+      });
+    } else {
+      document.getElementById('lich-chieu')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="-mx-4 -mt-8 sm:-mx-6 lg:-mx-8 bg-[#14080e] text-slate-100 min-h-screen">
@@ -257,19 +289,35 @@ export default function MovieDetail() {
 
               {/* Điểm đánh giá & Độ tuổi */}
               <div className="flex flex-wrap items-center gap-6 pt-1">
-                <a href="#danh-gia" className="flex items-center gap-2.5 group cursor-pointer">
-                  <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-amber-400 text-slate-950 font-black text-base shadow-md">
-                    ★
-                  </span>
-                  <div>
-                    <span className="text-xl font-black text-white group-hover:text-amber-400 transition">
-                      {ratingScore}
+                {totalReviews > 0 ? (
+                  <a href="#danh-gia" className="flex items-center gap-2.5 group cursor-pointer">
+                    <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-amber-400 text-slate-950 font-black text-base shadow-md">
+                      ★
                     </span>
-                    <span className="text-xs text-slate-400 block group-hover:text-slate-300">
-                      từ {ratingCount} đánh giá &gt;
+                    <div>
+                      <span className="text-xl font-black text-white group-hover:text-amber-400 transition">
+                        {ratingScore}
+                      </span>
+                      <span className="text-xs text-slate-400 block group-hover:text-slate-300">
+                        từ {ratingCount} đánh giá &gt;
+                      </span>
+                    </div>
+                  </a>
+                ) : (
+                  <a href="#danh-gia" className="flex items-center gap-2.5 group cursor-pointer">
+                    <span className="flex items-center justify-center h-8 w-8 rounded-lg bg-slate-700 text-amber-400 font-black text-base shadow-md">
+                      ★
                     </span>
-                  </div>
-                </a>
+                    <div>
+                      <span className="text-sm font-bold text-slate-200 group-hover:text-amber-400 transition">
+                        Chưa có đánh giá
+                      </span>
+                      <span className="text-xs text-slate-400 block group-hover:text-slate-300">
+                        Viết đánh giá đầu tiên &gt;
+                      </span>
+                    </div>
+                  </a>
+                )}
 
                 <div className="flex items-center gap-2.5">
                   <span className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-black text-white tracking-wider">
@@ -291,12 +339,13 @@ export default function MovieDetail() {
 
               {/* Nút Mua vé ngay & Xem review */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a
-                  href="#lich-chieu"
+                <button
+                  type="button"
+                  onClick={handleQuickBook}
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#d82d8b] to-rose-600 hover:from-[#c2185b] hover:to-rose-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-pink-600/30 transition active:scale-95 cursor-pointer"
                 >
                   <span>🎟️</span> Mua vé ngay
-                </a>
+                </button>
                 <a
                   href="#danh-gia"
                   className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-5 py-3.5 text-sm font-semibold text-white transition active:scale-95 cursor-pointer backdrop-blur-xs"
@@ -584,14 +633,31 @@ export default function MovieDetail() {
                               const end = formatTime(st.end_time);
 
                               return (
-                                <Link
+                                <button
                                   key={st.id}
-                                  to={`/booking/${st.id}/seats`}
-                                  className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition shadow-sm ${
+                                  type="button"
+                                  disabled={isSoldOut}
+                                  onClick={() => {
+                                    if (isSoldOut) return;
+                                    setBookingModalData({
+                                      showtime: {
+                                        id: st.id,
+                                        startTimeStr: start,
+                                        endTimeStr: end,
+                                        basePrice: st.base_price,
+                                        roomName: st.room_name || roomTitle.split('·')[0].trim(),
+                                        roomType: st.room_type || (roomTitle.includes('IMAX') ? 'IMAX Laser' : roomTitle.includes('3D') ? '3D Kỹ Thuật Số' : '2D Chuẩn'),
+                                      },
+                                      movie,
+                                      cinema,
+                                    });
+                                  }}
+                                  className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition shadow-sm cursor-pointer ${
                                     isSoldOut
                                       ? 'cursor-not-allowed border-white/5 bg-white/5 text-slate-500'
                                       : 'border-white/10 bg-[#24111d] hover:border-pink-500 hover:bg-[#341629] text-white hover:scale-102'
                                   }`}
+                                  title="Bấm để chọn ghế cho suất chiếu này"
                                 >
                                   <span className="text-sm font-extrabold group-hover:text-pink-400 transition">
                                     {start}
@@ -600,7 +666,7 @@ export default function MovieDetail() {
                                   <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-amber-300 font-semibold">
                                     {formatPrice(st.base_price)}
                                   </span>
-                                </Link>
+                                </button>
                               );
                             })}
                           </div>
@@ -630,8 +696,14 @@ export default function MovieDetail() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <h2 className="text-xl sm:text-2xl font-black text-white">Đánh giá từ người xem</h2>
                 <div className="flex items-center gap-2">
-                  <span className="text-amber-400 text-xl font-black">★ {ratingScore}</span>
-                  <span className="text-xs text-slate-400">/ 10 • {ratingCount} đánh giá</span>
+                  {totalReviews > 0 ? (
+                    <>
+                      <span className="text-amber-400 text-xl font-black">★ {ratingScore}</span>
+                      <span className="text-xs text-slate-400">/ 10 • {ratingCount} đánh giá</span>
+                    </>
+                  ) : (
+                    <span className="text-xs text-slate-400">Chưa có lượt đánh giá nào</span>
+                  )}
                 </div>
               </div>
 
@@ -674,41 +746,47 @@ export default function MovieDetail() {
 
               {/* Danh sách review từ người xem */}
               <div className="space-y-4">
-                {(reviewsFetch.data?.items || []).map((rev) => (
-                  <div key={rev.id} className="rounded-2xl border border-white/5 bg-[#1a0a14] p-4 sm:p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center font-bold text-white text-sm shadow">
-                          {rev.user_name ? rev.user_name.charAt(0).toUpperCase() : 'U'}
+                {(reviewsFetch.data?.items || []).map((rev) => {
+                  const displayName = rev.full_name || rev.user_name || 'Khán giả';
+                  const initial = displayName.charAt(0).toUpperCase();
+                  const timeStr = rev.created_at ? formatDateTime(rev.created_at) : 'Vừa xong';
+
+                  return (
+                    <div key={rev.id} className="rounded-2xl border border-white/5 bg-[#1a0a14] p-4 sm:p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center font-bold text-white text-sm shadow">
+                            {initial}
+                          </div>
+                          <div>
+                            <span className="font-bold text-white text-sm block">{displayName}</span>
+                            <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                              <span>{timeStr}</span>
+                              <span className="text-pink-400 font-semibold">• Đã mua vé</span>
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-bold text-white text-sm block">{rev.user_name || 'Khán giả'}</span>
-                          <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                            <span>Vừa xong</span>
-                            <span className="text-pink-400 font-semibold">• Đã mua vé</span>
+
+                        <div className="rounded-lg bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 text-xs font-black text-amber-300">
+                          ★ {formatRating(rev.rating, '10.0')}/10 - Cực phẩm!
+                        </div>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        {rev.comment}
+                      </p>
+
+                      {/* Tag cảm xúc */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {REVIEW_TAGS.slice(0, 4).map((tag) => (
+                          <span key={tag} className="rounded-md bg-white/5 border border-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                            {tag}
                           </span>
-                        </div>
-                      </div>
-
-                      <div className="rounded-lg bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 text-xs font-black text-amber-300">
-                        ★ {formatRating(rev.rating, '10.0')}/10 - Cực phẩm!
+                        ))}
                       </div>
                     </div>
-
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                      {rev.comment}
-                    </p>
-
-                    {/* Tag cảm xúc */}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {REVIEW_TAGS.slice(0, 4).map((tag) => (
-                        <span key={tag} className="rounded-md bg-white/5 border border-white/5 px-2 py-0.5 text-[10px] text-slate-300">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -831,7 +909,7 @@ export default function MovieDetail() {
 
                       <div className="flex items-center gap-1 text-amber-400 font-bold text-xs">
                         <span>★</span>
-                        <span>{formatRating(m.rating_avg, '8.3')}</span>
+                        <span>{Number(m.rating_avg) > 0 ? formatRating(m.rating_avg) : 'Mới'}</span>
                       </div>
                     </div>
                   </Link>
@@ -999,6 +1077,15 @@ export default function MovieDetail() {
           )}
         </div>
       </Modal>
+
+      {/* Modal Đặt vé xem phim - Chọn dãy ghế trực tiếp */}
+      <MoMoBookingModal
+        open={Boolean(bookingModalData)}
+        onClose={() => setBookingModalData(null)}
+        showtime={bookingModalData?.showtime}
+        movie={bookingModalData?.movie || movie}
+        cinema={bookingModalData?.cinema}
+      />
 
     </div>
   );
