@@ -291,3 +291,4 @@ Theo dõi tiến trình gửi email tự động (Nodemailer Gmail SMTP) đảm 
 | 8 | `created_at` | TIMESTAMP | NO | | CURRENT_TIMESTAMP | Thời gian tạo yêu cầu gửi mail |
 | 9 | `sent_at` | DATETIME | YES | | NULL | Thời điểm gửi mail thành công |
 | * | *Ràng buộc* | UNIQUE (`order_id`, `type`) | | UK | | **Idempotent**: Mỗi đơn thanh toán chỉ gửi duy nhất 1 email xác nhận |
+
