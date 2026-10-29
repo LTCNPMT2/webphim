@@ -6,12 +6,18 @@ const paymentModel = require('../models/paymentModel');
 const bookingService = require('./bookingService');
 const emailService = require('./email/emailService');
 
-const getSepayConfig = () => ({
-  token: process.env.SEPAY_API_TOKEN || 'ZOAOPLNCFFBBD72MACEDQPKNYVEHC5HQXSM2UYFG4GO5IRWGJXTN8KVJTXDAS7KL',
-  bankBrand: process.env.SEPAY_BANK_BRAND || 'MBBank',
-  accountNumber: process.env.SEPAY_ACCOUNT_NUMBER || '0931883988',
-  accountName: process.env.SEPAY_ACCOUNT_NAME || 'NGUYEN TRONG BANG',
-});
+const getSepayConfig = () => {
+  const envToken = (process.env.SEPAY_API_TOKEN || '').trim();
+  const token = (envToken && !envToken.includes('your_sepay_api_token') && envToken !== '')
+    ? envToken
+    : 'ZOAOPLNCFFBBD72MACEDQPKNYVEHC5HQXSM2UYFG4GO5IRWGJXTN8KVJTXDAS7KL';
+  return {
+    token,
+    bankBrand: process.env.SEPAY_BANK_BRAND || 'MBBank',
+    accountNumber: process.env.SEPAY_ACCOUNT_NUMBER || '0931883988',
+    accountName: process.env.SEPAY_ACCOUNT_NAME || 'NGUYEN TRONG BANG',
+  };
+};
 
 // Chuẩn hóa chuỗi: loại bỏ toàn bộ khoảng trắng, dấu gạch nối, ký tự đặc biệt
 const normalizeText = (text) => String(text || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
@@ -103,7 +109,31 @@ exports.checkPayment = async (user, bookingId, bookingCode) => {
 
   // Nếu đơn trong DB đã được đánh dấu paid
   if (targetBooking && targetBooking.status === 'paid') {
-    return { paid: true, booking: targetBooking, message: 'Đơn hàng đã được thanh toán' };
+    let txInfo = null;
+    if (targetBooking.id) {
+      try {
+        const payments = await bookingModel.getPayments(targetBooking.id);
+        if (payments && payments.length > 0) {
+          const lastPayment = payments[payments.length - 1];
+          txInfo = {
+            id: lastPayment.id,
+            reference_number: lastPayment.transaction_code,
+            amount: lastPayment.amount,
+            date: lastPayment.paid_at,
+          };
+        }
+      } catch {}
+    }
+    return {
+      paid: true,
+      booking: targetBooking,
+      transaction: txInfo || {
+        reference_number: `SEPAY-${targetCode}`,
+        amount: targetBooking.total_amount,
+        date: new Date().toISOString(),
+      },
+      message: 'Đơn hàng đã được thanh toán',
+    };
   }
 
   if (!targetCode) {

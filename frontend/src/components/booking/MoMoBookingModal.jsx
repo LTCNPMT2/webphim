@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { checkSepayPayment, checkSepayByCode, createBooking, getCombos, getSeatMap, payBooking } from '../../services/bookingService.js';
 import * as authService from '../../services/authService.js';
 import { TOKEN_KEY } from '../../services/api.js';
-import { formatDateTime, formatPrice } from '../../utils/format.js';
+import { assetUrl, formatDateTime, formatPrice } from '../../utils/format.js';
 
 // Danh sách Combo bắp nước chuẩn MoMo Cinema (Ảnh số 2)
 const MOMO_COMBOS = [
@@ -70,6 +70,33 @@ export default function MoMoBookingModal({
 
   // Số lượng combo đã chọn: { [comboId]: quantity }
   const [selectedCombos, setSelectedCombos] = useState({});
+
+  // Danh sách combo lấy từ server (đồng bộ trang Admin)
+  const [combosList, setCombosList] = useState([]);
+  const [loadingCombos, setLoadingCombos] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let isMounted = true;
+    setLoadingCombos(true);
+    getCombos()
+      .then((data) => {
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setCombosList(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Lỗi lấy danh sách combo:', err);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingCombos(false);
+      });
+    return () => { isMounted = false; };
+  }, [open]);
+
+  const activeCombos = useMemo(() => {
+    return combosList.length > 0 ? combosList : MOMO_COMBOS;
+  }, [combosList]);
 
   // Đơn đặt vé vừa tạo từ backend
   const [createdBooking, setCreatedBooking] = useState(null);
@@ -239,10 +266,10 @@ export default function MoMoBookingModal({
   // Tính tổng tiền combo
   const comboSubtotal = useMemo(() => {
     return Object.entries(selectedCombos).reduce((sum, [comboId, qty]) => {
-      const combo = MOMO_COMBOS.find((c) => c.id === Number(comboId));
+      const combo = activeCombos.find((c) => c.id === Number(comboId));
       return sum + (combo ? combo.price * qty : 0);
     }, 0);
-  }, [selectedCombos]);
+  }, [selectedCombos, activeCombos]);
 
   // Tổng thanh toán toàn bộ
   const totalAmount = seatSubtotal + comboSubtotal;
@@ -382,6 +409,8 @@ export default function MoMoBookingModal({
       const paidTicket = {
         id: createdBooking?.id || Date.now(),
         booking_code: cleanBookingCode,
+        user_id: user?.id,
+        user_email: (user?.email || '').toLowerCase().trim(),
         movie_title: movie?.title || 'Trại Buôn Người',
         poster_url: movie?.poster_url || null,
         cinema_name: cinema?.name || 'Cine Sài Gòn Center',
@@ -396,7 +425,7 @@ export default function MoMoBookingModal({
         payment_method: 'SePay VietQR (MBBank)',
         seats: selectedSeats.map((s) => ({ label: s.id, seat_type: s.type, price: s.price })),
         combos: Object.entries(selectedCombos).map(([id, qty]) => {
-          const c = MOMO_COMBOS.find((item) => item.id === Number(id));
+          const c = activeCombos.find((item) => item.id === Number(id));
           return { name: c?.name || 'Combo', quantity: qty, price: c?.price || 0, unit_price: c?.price || 0 };
         }),
         cinema: {
@@ -480,7 +509,11 @@ export default function MoMoBookingModal({
       }
 
       if (res?.paid) {
-        handleConfirmPaid(res.transaction);
+        handleConfirmPaid(res.transaction || {
+          reference_number: `SEPAY-${code}`,
+          date: new Date().toISOString(),
+          amount: totalAmount,
+        });
         return true;
       }
 
@@ -522,44 +555,53 @@ export default function MoMoBookingModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto font-sans">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-start sm:justify-center bg-black/85 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto font-sans">
       
       {/* ============================================================== */}
-      {/* BƯỚC 1: SƠ ĐỒ CHỌN GHẾ (Y CHANG ẢNH SỐ 1) */}
+      {/* BƯỚC 1: SƠ ĐỒ CHỌN GHẾ (TỐI ƯU VỪA MÀN HÌNH 100%, NÚT THOÁT RÕ RÀNG) */}
       {/* ============================================================== */}
       {step === 1 && (
-        <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in text-slate-800">
+        <div className="relative w-full max-w-2xl max-h-[96vh] flex flex-col my-auto overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in text-slate-800">
           
           {/* Header màu hồng Magenta chuẩn MoMo */}
-          <div className="flex items-center justify-between bg-[#d82d8b] px-4 py-3 text-white">
+          <div className="flex items-center justify-between bg-[#d82d8b] px-4 py-2 text-white shrink-0">
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/20 transition text-lg font-bold"
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/20 transition text-xl font-bold cursor-pointer"
               aria-label="Quay lại"
+              title="Quay lại"
             >
               ‹
             </button>
-            <h2 className="text-base sm:text-lg font-bold tracking-wide">
+            <h2 className="text-sm sm:text-base font-bold tracking-wide">
               Mua vé xem phim
             </h2>
-            <div className="w-8" />
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/20 transition text-lg font-bold cursor-pointer"
+              aria-label="Đóng"
+              title="Đóng"
+            >
+              ✕
+            </button>
           </div>
 
           {/* Sân khấu rạp tối */}
-          <div className="bg-[#18181b] p-4 sm:p-6 text-white text-center">
+          <div className="flex-1 overflow-y-auto bg-[#18181b] px-3 sm:px-6 py-2.5 sm:py-3 text-white text-center">
             
             {/* Thanh hiển thị Màn hình cong */}
-            <div className="mb-6 flex flex-col items-center">
-              <div className="h-1.5 w-64 sm:w-80 rounded-full bg-slate-300 shadow-[0_0_15px_rgba(255,255,255,0.6)]" />
-              <span className="mt-2 text-[10px] sm:text-xs font-bold tracking-widest text-slate-400 uppercase">
+            <div className="mb-2.5 flex flex-col items-center">
+              <div className="h-1.5 w-56 sm:w-72 rounded-full bg-slate-300 shadow-[0_0_12px_rgba(255,255,255,0.6)]" />
+              <span className="mt-1 text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 MÀN HÌNH
               </span>
             </div>
 
             {/* Khung chứa các hàng ghế */}
-            <div className="relative inline-block max-w-full overflow-x-auto pb-4">
+            <div className="relative inline-block max-w-full overflow-x-auto pb-1">
               
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 {/* Hàng A, B, C: Ghế thường (màu tím) */}
                 {standardRows.map((row) => (
                   <div key={row.label} className="flex items-center justify-center gap-1.5 sm:gap-2">
@@ -577,7 +619,7 @@ export default function MoMoBookingModal({
                           type="button"
                           disabled={isBooked}
                           onClick={() => toggleSeat(seat)}
-                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-6 sm:w-7 h-6 sm:h-7 ${btnColor}`}
+                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-6 sm:w-7 h-6 sm:h-7 cursor-pointer ${btnColor}`}
                           title={`${seat.id} · Ghế thường · ${formatPrice(seat.price)}`}
                         >
                           {seat.id}
@@ -588,9 +630,9 @@ export default function MoMoBookingModal({
                 ))}
 
                 {/* Hàng D, E, F, G: Ghế VIP (màu đỏ) kèm khung viền Vùng trung tâm */}
-                <div className="relative space-y-2 py-0.5">
+                <div className="relative space-y-1.5 sm:space-y-2 py-0.5">
                   <div
-                    className="pointer-events-none absolute -inset-y-1 left-1/2 -translate-x-1/2 w-[184px] sm:w-[220px] border-2 border-emerald-400 rounded-lg shadow-[0_0_12px_rgba(52,211,153,0.3)] z-10"
+                    className="pointer-events-none absolute -inset-y-0.5 left-1/2 -translate-x-1/2 w-[184px] sm:w-[220px] border-2 border-emerald-400 rounded-lg shadow-[0_0_12px_rgba(52,211,153,0.3)] z-10"
                   />
                   {vipRows.map((row) => (
                     <div key={row.label} className="flex items-center justify-center gap-1.5 sm:gap-2">
@@ -608,7 +650,7 @@ export default function MoMoBookingModal({
                             type="button"
                             disabled={isBooked}
                             onClick={() => toggleSeat(seat)}
-                            className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-6 sm:w-7 h-6 sm:h-7 ${btnColor}`}
+                            className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-6 sm:w-7 h-6 sm:h-7 cursor-pointer ${btnColor}`}
                             title={`${seat.id} · Ghế VIP · ${formatPrice(seat.price)}`}
                           >
                             {seat.id}
@@ -636,7 +678,7 @@ export default function MoMoBookingModal({
                           type="button"
                           disabled={isBooked}
                           onClick={() => toggleSeat(seat)}
-                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-14 sm:w-16 h-7 sm:h-8 ${btnColor}`}
+                          className={`flex items-center justify-center text-[10px] sm:text-xs font-bold text-white transition rounded-md shadow-2xs active:scale-95 w-14 sm:w-16 h-6 sm:h-7 cursor-pointer ${btnColor}`}
                           title={`${seat.id} · Ghế đôi Sweetbox · ${formatPrice(seat.price)}`}
                         >
                           {seat.id}
@@ -648,35 +690,35 @@ export default function MoMoBookingModal({
               </div>
 
               {/* Chú thích màu sắc ghế (Legend) */}
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] text-slate-300">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 text-[10px] sm:text-[11px] text-slate-300">
                 <div className="flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 rounded bg-[#3f3f46]" />
+                  <span className="h-3 w-3 rounded bg-[#3f3f46]" />
                   <span>Đã đặt</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 rounded bg-[#ff007f] ring-1 ring-white" />
+                  <span className="h-3 w-3 rounded bg-[#ff007f] ring-1 ring-white" />
                   <span>Ghế bạn chọn</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 rounded bg-[#673ab7]" />
+                  <span className="h-3 w-3 rounded bg-[#673ab7]" />
                   <span>Ghế thường</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 rounded bg-[#e53935]" />
+                  <span className="h-3 w-3 rounded bg-[#e53935]" />
                   <span>Ghế VIP</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 rounded bg-[#d82d8b]" />
+                  <span className="h-3 w-3 rounded bg-[#d82d8b]" />
                   <span>Ghế Sweetbox</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 rounded border-2 border-emerald-400 bg-transparent" />
+                  <span className="h-3 w-3 rounded border-2 border-emerald-400 bg-transparent" />
                   <span>Vùng trung tâm</span>
                 </div>
               </div>
 
-              <div className="mt-2 text-center">
-                <button type="button" className="text-[11px] text-slate-400 underline hover:text-slate-200">
+              <div className="mt-1 text-center">
+                <button type="button" className="text-[10px] text-slate-400 underline hover:text-slate-200">
                   Xem chi tiết hình ảnh và thông tin ghế
                 </button>
               </div>
@@ -686,30 +728,32 @@ export default function MoMoBookingModal({
           </div>
 
           {/* Thanh tóm tắt trắng ở đáy chuẩn MoMo */}
-          <div className="border-t border-slate-200 bg-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+          <div className="border-t border-slate-200 bg-white px-4 py-2 sm:py-2.5 flex items-center justify-between gap-3 shrink-0">
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="rounded bg-rose-600 px-1.5 py-0.5 text-[9px] font-black text-white shrink-0">
                   {movie?.age_rating || 'C18'}
                 </span>
-                <span className="font-extrabold text-sm sm:text-base text-slate-900">
+                <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
                   {movie?.title || 'Trại Buôn Người'}
                 </span>
               </div>
-              <p className="text-xs text-amber-600 font-medium">
+              <p className="text-[11px] text-amber-600 font-medium truncate">
                 {showtime?.startTimeStr || '13:40'} ~ {showtime?.endTimeStr || '15:55'} · Hôm nay · {showtime?.roomName || 'Cinema 8'} · {showtime?.roomType || movie?.room_type || '2D Chuẩn'}
               </p>
-              <div className="text-xs text-slate-700">
-                <span className="text-slate-500">Chỗ ngồi: </span>
-                <span className="font-bold text-slate-900">
-                  {selectedSeats.length > 0 ? selectedSeats.map((s) => s.id).join(', ') : 'Chưa chọn'}
-                </span>
-              </div>
-              <div className="text-xs text-slate-700">
-                <span className="text-slate-500">Tạm tính: </span>
-                <span className="text-base font-black text-slate-900">
-                  {formatPrice(seatSubtotal)}
-                </span>
+              <div className="flex items-center gap-3 text-xs">
+                <div className="truncate">
+                  <span className="text-slate-500">Chỗ ngồi: </span>
+                  <span className="font-bold text-slate-900">
+                    {selectedSeats.length > 0 ? selectedSeats.map((s) => s.id).join(', ') : 'Chưa chọn'}
+                  </span>
+                </div>
+                <div className="shrink-0">
+                  <span className="text-slate-500">Tạm tính: </span>
+                  <span className="text-sm sm:text-base font-black text-slate-900">
+                    {formatPrice(seatSubtotal)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -718,7 +762,7 @@ export default function MoMoBookingModal({
               type="button"
               disabled={selectedSeats.length === 0}
               onClick={() => setStep(2)}
-              className="rounded-xl bg-[#d82d8b] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-pink-600/30 transition hover:bg-[#c2185b] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+              className="rounded-xl bg-[#d82d8b] px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-pink-600/30 transition hover:bg-[#c2185b] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
             >
               Mua vé
             </button>
@@ -728,82 +772,96 @@ export default function MoMoBookingModal({
       )}
 
       {/* ============================================================== */}
-      {/* BƯỚC 2: CHỌN COMBO - BẮP NƯỚC (Y CHANG ẢNH SỐ 2) */}
+      {/* BƯỚC 2: CHỌN COMBO - BẮP NƯỚC (ĐỒNG BỘ TỪ ADMIN) */}
       {/* ============================================================== */}
       {step === 2 && (
-        <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in text-slate-800">
+        <div className="relative w-full max-w-lg max-h-[96vh] flex flex-col my-auto overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in text-slate-800">
           
           {/* Header màu hồng */}
-          <div className="flex items-center justify-between bg-[#d82d8b] px-4 py-3 text-white">
+          <div className="flex items-center justify-between bg-[#d82d8b] px-4 py-2 text-white shrink-0">
             <button
               onClick={() => setStep(1)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/20 transition text-lg font-bold"
+              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/20 transition text-xl font-bold cursor-pointer"
               aria-label="Quay lại chọn ghế"
+              title="Quay lại chọn ghế"
             >
               ‹
             </button>
-            <h2 className="text-base sm:text-lg font-bold tracking-wide">
+            <h2 className="text-sm sm:text-base font-bold tracking-wide">
               Combo - Bắp nước
             </h2>
             <div className="w-8" />
           </div>
 
           {/* Danh sách các Combo bắp nước */}
-          <div className="max-h-[60vh] overflow-y-auto p-4 sm:p-5 divide-y divide-slate-100">
-            {MOMO_COMBOS.map((combo) => {
-              const qty = selectedCombos[combo.id] || 0;
-              return (
-                <div key={combo.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-3.5">
-                  
-                  {/* Ảnh combo kèm tag */}
-                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
-                    <img
-                      src={combo.image}
-                      alt={combo.name}
-                      className="h-full w-full object-cover"
-                    />
-                    {combo.tag && (
-                      <span className="absolute top-1 left-1 rounded bg-rose-600 px-1 py-0.5 text-[8px] font-black text-white leading-tight">
-                        {combo.tag}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Thông tin combo */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                      {combo.name} - {formatPrice(combo.price)}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500 whitespace-pre-line leading-relaxed">
-                      {combo.description}
-                    </p>
-
-                    {/* Bộ tăng giảm số lượng (+ / -) */}
-                    <div className="mt-3 flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => updateComboQty(combo.id, -1)}
-                        disabled={qty === 0}
-                        className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-slate-600 hover:border-[#d82d8b] hover:text-[#d82d8b] disabled:opacity-40 transition"
-                      >
-                        –
-                      </button>
-                      <span className="w-5 text-center text-xs font-bold text-slate-900">
-                        {qty}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateComboQty(combo.id, 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d82d8b] bg-pink-50 text-[#d82d8b] hover:bg-[#d82d8b] hover:text-white transition"
-                      >
-                        +
-                      </button>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 divide-y divide-slate-100">
+            {loadingCombos && activeCombos.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                Đang tải danh sách bắp nước...
+              </div>
+            ) : (
+              activeCombos.map((combo) => {
+                const qty = selectedCombos[combo.id] || 0;
+                const imgUrl = combo.image_url ? assetUrl(combo.image_url) : (combo.image || '');
+                return (
+                  <div key={combo.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start gap-3.5">
+                    
+                    {/* Ảnh combo */}
+                    <div className="relative h-18 w-18 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50 grid place-items-center text-3xl">
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={combo.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>🍿</span>
+                      )}
+                      {combo.tag && (
+                        <span className="absolute top-1 left-1 rounded bg-rose-600 px-1 py-0.5 text-[8px] font-black text-white leading-tight">
+                          {combo.tag}
+                        </span>
+                      )}
                     </div>
-                  </div>
 
-                </div>
-              );
-            })}
+                    {/* Thông tin combo */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                        {combo.name} - {formatPrice(combo.price)}
+                      </h3>
+                      {combo.description && (
+                        <p className="mt-1 text-xs text-slate-500 whitespace-pre-line leading-relaxed">
+                          {combo.description}
+                        </p>
+                      )}
+
+                      {/* Bộ tăng giảm số lượng (+ / -) */}
+                      <div className="mt-2.5 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => updateComboQty(combo.id, -1)}
+                          disabled={qty === 0}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 text-slate-600 hover:border-[#d82d8b] hover:text-[#d82d8b] disabled:opacity-30 transition cursor-pointer"
+                        >
+                          –
+                        </button>
+                        <span className="w-5 text-center text-xs font-bold text-slate-900">
+                          {qty}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateComboQty(combo.id, 1)}
+                          className="flex h-6 w-6 items-center justify-center rounded-full border border-[#d82d8b] bg-pink-50 text-[#d82d8b] hover:bg-[#d82d8b] hover:text-white transition cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Thanh thanh toán ở đáy */}
@@ -879,10 +937,10 @@ export default function MoMoBookingModal({
       {/* BƯỚC 3: QUÉT MÃ QR BẰNG MOMO (Y CHANG ẢNH SỐ 3) */}
       {/* ============================================================== */}
       {step === 3 && (
-        <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in grid grid-cols-1 md:grid-cols-12">
+        <div className="relative w-full max-w-3xl max-h-[96vh] my-auto overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in grid grid-cols-1 md:grid-cols-12">
           
           {/* CỘT TRÁI: THÔNG TIN CHI TIẾT VÉ ĐÃ CHỌN (md:col-span-6) */}
-          <div className="md:col-span-6 p-5 sm:p-7 flex flex-col justify-between space-y-5 bg-white text-slate-800">
+          <div className="md:col-span-6 p-5 sm:p-7 flex flex-col justify-between space-y-5 bg-white text-slate-800 overflow-y-auto max-h-[96vh]">
             <div>
               {/* Badge độ tuổi + Tên phim */}
               <div className="flex items-center gap-2 mb-3">
@@ -948,6 +1006,24 @@ export default function MoMoBookingModal({
                   <div className="flex items-center justify-between text-xs pt-1">
                     <span className="text-slate-500">Bắp nước ({Object.values(selectedCombos).reduce((a, b) => a + b, 0)} món)</span>
                     <span className="font-bold text-slate-900">{formatPrice(comboSubtotal)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Ảnh avatar/poster của phim lấp đầy khoảng trống (kích thước lớn rõ nét) */}
+            <div className="my-auto py-2 flex flex-col items-center justify-center">
+              <div className="relative h-52 w-36 sm:h-64 sm:w-44 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 bg-slate-100 flex items-center justify-center">
+                {movie?.poster_url || movie?.banner_url ? (
+                  <img
+                    src={assetUrl(movie?.poster_url || movie?.banner_url)}
+                    alt={movie?.title || 'Poster phim'}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-tr from-brand-600 to-pink-500 flex flex-col items-center justify-center text-white text-xs font-bold p-2 text-center">
+                    <span className="text-4xl mb-1">🎬</span>
+                    <span className="line-clamp-2">{movie?.title || 'CineBooking'}</span>
                   </div>
                 )}
               </div>
@@ -1072,7 +1148,16 @@ export default function MoMoBookingModal({
       {/* BƯỚC 4: THÔNG BÁO THANH TOÁN THÀNH CÔNG & CHI TIẾT VÉ ĐÃ MUA */}
       {/* ============================================================== */}
       {step === 4 && (
-        <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white p-5 sm:p-7 text-slate-800 shadow-2xl animate-fade-in space-y-4 max-h-[92vh] overflow-y-auto">
+        <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white p-5 sm:p-7 text-slate-800 shadow-2xl animate-fade-in space-y-4 max-h-[96vh] my-auto overflow-y-auto">
+          {/* Nút thoát */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition font-bold cursor-pointer z-10"
+            aria-label="Đóng"
+            title="Thoát"
+          >
+            ✕
+          </button>
           
           {/* Biểu tượng tick xanh thành công lớn */}
           <div className="text-center space-y-2">
@@ -1193,7 +1278,7 @@ export default function MoMoBookingModal({
                   <span className="font-medium text-slate-800 text-right max-w-[65%]">
                     {Object.entries(selectedCombos)
                       .map(([id, qty]) => {
-                        const c = MOMO_COMBOS.find((item) => item.id === Number(id));
+                        const c = activeCombos.find((item) => item.id === Number(id));
                         return c ? `${qty}× ${c.name}` : null;
                       })
                       .filter(Boolean)

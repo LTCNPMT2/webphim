@@ -122,6 +122,7 @@ exports.releaseSeats = async (conn, bookingId) => {
 
 exports.markPaid = async (conn, id) => {
   await conn.execute("UPDATE bookings SET status = 'paid', expires_at = NULL WHERE id = ?", [id]);
+  await conn.execute("UPDATE booking_seats SET active = 1 WHERE booking_id = ?", [id]);
 };
 
 exports.markCancelled = async (conn, id) => {

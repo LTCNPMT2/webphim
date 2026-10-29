@@ -333,9 +333,11 @@ export default function MovieDetail() {
               </div>
 
               {/* Câu Slogan / Tagline */}
-              <p className="text-sm italic text-slate-300 font-serif border-l-2 border-pink-500/50 pl-3">
-                &ldquo;{movie.tagline || 'Khi gia đình là lý do để sống sót'}&rdquo;
-              </p>
+              {movie.tagline && (
+                <p className="text-sm sm:text-base italic font-medium text-slate-300 border-l-2 border-pink-500/60 pl-3.5 tracking-wide leading-relaxed">
+                  “{movie.tagline}”
+                </p>
+              )}
 
               {/* Nút Mua vé ngay & Xem review */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -932,7 +934,7 @@ export default function MovieDetail() {
             <div className="md:col-span-5 space-y-2">
               <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
                 Câu hỏi thường gặp về phim{' '}
-                <span className="font-serif italic text-pink-500 block text-2xl sm:text-3xl mt-1">
+                <span className="italic text-pink-400 block text-2xl sm:text-3xl mt-1 font-bold">
                   {movie.title}
                 </span>
               </h3>
@@ -980,7 +982,7 @@ export default function MovieDetail() {
           <div className="text-center space-y-1">
             <h3 className="text-xl sm:text-2xl font-bold text-white">
               Giới thiệu phim{' '}
-              <span className="font-serif italic text-pink-500 text-2xl sm:text-3xl">
+              <span className="italic text-pink-400 text-2xl sm:text-3xl font-bold">
                 {movie.title}
               </span>
             </h3>

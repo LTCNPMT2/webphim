@@ -94,6 +94,8 @@ export default function Checkout() {
           const paidTicket = {
             id: booking.id,
             booking_code: booking.booking_code,
+            user_id: user?.id || booking.user_id,
+            user_email: (user?.email || booking.user?.email || '').toLowerCase().trim(),
             movie_title: booking.movie?.title,
             poster_url: booking.movie?.poster_url,
             cinema_name: booking.cinema?.name,

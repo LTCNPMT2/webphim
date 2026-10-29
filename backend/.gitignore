@@ -4,3 +4,5 @@ uploads/*
 !uploads/.gitkeep
 !uploads/posters/
 !uploads/posters/*
+!uploads/combos/
+!uploads/combos/*

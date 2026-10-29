@@ -9,16 +9,20 @@ import PageHeader from '../../components/admin/PageHeader.jsx';
 import AdminTable, { RowActions } from '../../components/admin/AdminTable.jsx';
 import ConfirmDialog from '../../components/admin/ConfirmDialog.jsx';
 import FormModal from '../../components/admin/FormModal.jsx';
+import ImagePicker from '../../components/admin/ImagePicker.jsx';
 import { ActiveBadge } from '../../components/admin/Badge.jsx';
 import FormField from '../../components/ui/FormField.jsx';
 import Button from '../../components/ui/Button.jsx';
 
 function ComboForm({ combo, onClose, onSaved }) {
   const form = useFormState({
-    name: combo?.name || '', description: combo?.description || '', price: combo?.price ?? '',
-    image_url: combo?.image_url || '', is_active: combo ? Boolean(combo.is_active) : true,
+    name: combo?.name || '',
+    description: combo?.description || '',
+    price: combo?.price ?? '',
+    is_active: combo ? Boolean(combo.is_active) : true,
+    image: null,
   });
-  const { values: v, errors, change } = form;
+  const { values: v, errors, change, setValue } = form;
 
   const validate = (x) => {
     const er = {};
@@ -31,8 +35,13 @@ function ComboForm({ combo, onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const ok = await form.submit((x) => {
-      const body = { name: x.name.trim(), description: x.description.trim(), price: Number(x.price), image_url: x.image_url.trim(), is_active: x.is_active };
-      return combo ? updateCombo(combo.id, body) : createCombo(body);
+      const fd = new FormData();
+      fd.append('name', x.name.trim());
+      fd.append('description', x.description.trim());
+      fd.append('price', Number(x.price));
+      fd.append('is_active', x.is_active ? '1' : '0');
+      if (x.image) fd.append('image', x.image);
+      return combo ? updateCombo(combo.id, fd) : createCombo(fd);
     }, validate);
     if (ok) { toast.success(combo ? 'Đã cập nhật combo' : 'Đã thêm combo'); onSaved(); }
   };
@@ -42,8 +51,16 @@ function ComboForm({ combo, onClose, onSaved }) {
       <FormField label="Tên combo *" name="name" value={v.name} onChange={change} error={errors.name} />
       <FormField label="Mô tả" name="description" placeholder="1 bắp ngọt size M + 1 nước ngọt size M" value={v.description} onChange={change} error={errors.description} />
       <FormField label="Giá (đ) *" name="price" type="number" min="1000" step="1000" value={v.price} onChange={change} error={errors.price} />
-      <FormField label="Link ảnh" name="image_url" placeholder="https://..." value={v.image_url} onChange={change} error={errors.image_url} />
-      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" checked={v.is_active} onChange={change} className="accent-rose-600" /> Đang bán (hiện ở bước chọn bắp nước)</label>
+      <ImagePicker
+        label="Ảnh combo"
+        name="image"
+        file={v.image}
+        currentUrl={combo?.image_url}
+        onChange={(f) => setValue('image', f)}
+        square
+        icon="🍿"
+      />
+      <label className="flex items-center gap-2 text-sm pt-2"><input type="checkbox" name="is_active" checked={v.is_active} onChange={change} className="accent-rose-600" /> Đang bán (hiện ở bước chọn bắp nước)</label>
     </FormModal>
   );
 }

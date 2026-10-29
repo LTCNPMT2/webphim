@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
-const { uploadMovieImages } = require('../middlewares/upload');
+const { uploadMovieImages, uploadComboImage } = require('../middlewares/upload');
 const { query } = require('express-validator');
 const { idParam } = require('../validators/commonValidator');
 
@@ -64,8 +64,8 @@ router.delete('/showtimes/:id', idParam, validate, showtime.remove);
 
 // ----- Combo bắp nước -----
 router.get('/combos', comboAdmin.list);
-router.post('/combos', createComboRules, validate, comboAdmin.create);
-router.put('/combos/:id', idParam, updateComboRules, validate, comboAdmin.update);
+router.post('/combos', uploadComboImage, createComboRules, validate, comboAdmin.create);
+router.put('/combos/:id', uploadComboImage, idParam, updateComboRules, validate, comboAdmin.update);
 router.delete('/combos/:id', idParam, validate, comboAdmin.remove);
 
 // ----- Mã giảm giá -----

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth.js';
 import { useFetch } from '../hooks/useFetch.js';
 import { getMyBookings } from '../services/bookingService.js';
 import { assetUrl, formatDateTime, formatPrice } from '../utils/format.js';
@@ -46,22 +47,32 @@ function BookingItem({ b, onDetail }) {
 }
 
 export default function MyBookings() {
+  const { user } = useAuth();
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [detailId, setDetailId] = useState(null);
 
   const list = useFetch(() => getMyBookings({ status: status || undefined, page, limit: 5 }), [status, page]);
 
-  // Đọc danh sách vé thanh toán MoMo vừa đặt
+  // Đọc danh sách vé thanh toán MoMo vừa đặt (RÀNG BUỘC THEO TÀI KHOẢN ĐANG ĐĂNG NHẬP)
   const localTickets = useMemo(() => {
+    if (!user) return [];
     try {
       const tickets = JSON.parse(localStorage.getItem('momo_paid_tickets') || '[]');
-      if (!status || status === 'paid') return tickets;
+      const userTickets = tickets.filter((t) => {
+        const ticketUserId = t.user_id || t.user?.id;
+        const ticketEmail = (t.user_email || t.user?.email || '').toLowerCase().trim();
+        const currentEmail = (user.email || '').toLowerCase().trim();
+        if (ticketUserId && String(ticketUserId) === String(user.id)) return true;
+        if (ticketEmail && currentEmail && ticketEmail === currentEmail) return true;
+        return false;
+      });
+      if (!status || status === 'paid') return userTickets;
       return [];
     } catch {
       return [];
     }
-  }, [status]);
+  }, [user, status]);
 
   const allItems = useMemo(() => {
     const apiItems = list.data?.items || [];

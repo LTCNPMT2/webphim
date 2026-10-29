@@ -7,7 +7,7 @@ module.exports = (req, res, next) => {
   const result = validationResult(req);
   if (result.isEmpty()) return next();
 
-  removeUploadedFiles(req.files); // nếu có ảnh đã upload thì xóa đi vì request không hợp lệ
+  removeUploadedFiles(req.files || req.file); // nếu có ảnh đã upload thì xóa đi vì request không hợp lệ
 
   const errors = result
     .array({ onlyFirstError: true })

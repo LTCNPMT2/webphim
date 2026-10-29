@@ -30,9 +30,24 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:logout', onForcedLogout);
   }, []);
 
+  const cleanLocalTicketsForUser = (currentUser) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem('momo_paid_tickets') || '[]');
+      const currentEmail = (currentUser?.email || '').toLowerCase().trim();
+      const cleaned = existing.filter((t) => {
+        const ticketUserId = t.user_id || t.user?.id;
+        const ticketEmail = (t.user_email || t.user?.email || '').toLowerCase().trim();
+        return (ticketUserId && String(ticketUserId) === String(currentUser?.id)) ||
+               (ticketEmail && currentEmail && ticketEmail === currentEmail);
+      });
+      localStorage.setItem('momo_paid_tickets', JSON.stringify(cleaned));
+    } catch {}
+  };
+
   const login = useCallback(async (email, password) => {
     const data = await authService.login(email, password);
     localStorage.setItem(TOKEN_KEY, data.token);
+    cleanLocalTicketsForUser(data.user);
     setUser(data.user);
     return data.user;
   }, []);
@@ -40,6 +55,7 @@ export function AuthProvider({ children }) {
   const register = useCallback(async (payload) => {
     const data = await authService.register(payload);
     localStorage.setItem(TOKEN_KEY, data.token); // đăng ký xong tự đăng nhập luôn
+    cleanLocalTicketsForUser(data.user);
     setUser(data.user);
     return data.user;
   }, []);
@@ -47,12 +63,14 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = useCallback(async (payload) => {
     const data = await authService.googleLogin(payload);
     localStorage.setItem(TOKEN_KEY, data.token);
+    cleanLocalTicketsForUser(data.user);
     setUser(data.user);
     return data.user;
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem('momo_paid_tickets');
     setUser(null);
     toast.success('Đã đăng xuất');
   }, []);

@@ -63,9 +63,26 @@ export default function GoogleLoginButton({ onSuccess, className = '' }) {
     };
   }, [clientId, loginWithGoogle, onSuccess]);
 
-  const handleGoogleClick = () => {
+  const handleGoogleClick = async () => {
     if (!clientId) {
-      toast.error('Chưa cấu hình VITE_GOOGLE_CLIENT_ID trong .env');
+      toast('Chưa cấu hình VITE_GOOGLE_CLIENT_ID. Đang tự động đăng nhập nhanh bằng Google Demo...', {
+        icon: '⚡',
+        duration: 3500,
+      });
+      setLoading(true);
+      try {
+        await loginWithGoogle({
+          isDemo: true,
+          demoEmail: 'google.user@cinema.vn',
+          demoName: 'Khách hàng Google',
+        });
+        toast.success('Đăng nhập thành công với tài khoản Google Test!');
+        if (onSuccess) onSuccess();
+      } catch (err) {
+        toast.error(getErrorMessage(err) || 'Đăng nhập Google Demo thất bại');
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 

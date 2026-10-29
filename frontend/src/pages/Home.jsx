@@ -100,30 +100,7 @@ export default function Home() {
         onPlayTrailer={(movie) => setTrailerMovie(movie)}
       />
 
-      {/* 2. Dải Tiện ích & Ưu điểm CineBooking */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          { icon: '⚡', title: 'Đặt vé siêu tốc', desc: 'Chọn ghế & thanh toán tức thì trong 30s' },
-          { icon: '🍿', title: 'Combo Bắp Nước', desc: 'Nhiều vị hấp dẫn, nhận ngay tại quầy' },
-          { icon: '💺', title: 'Phòng Chiếu IMAX', desc: 'Âm thanh Dolby Atmos & Màn ảnh cong' },
-          { icon: '🎟️', title: 'Ưu đãi thành viên', desc: 'Giảm giá vé & tích điểm mỗi lần xem' },
-        ].map((item, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 backdrop-blur transition duration-300 hover:border-white/[0.14] hover:bg-white/[0.04]"
-          >
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-brand-600/30 to-pink-500/10 border border-brand-500/30 text-xl">
-              {item.icon}
-            </span>
-            <div>
-              <h3 className="text-sm font-bold text-slate-100">{item.title}</h3>
-              <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">{item.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 3. Mục 1: PHIM ĐANG CHIẾU (Thiết kế MoMo Cinema) */}
+      {/* 2. Mục 1: PHIM ĐANG CHIẾU (Thiết kế MoMo Cinema) */}
       <div className="relative rounded-3xl border border-white/[0.07] bg-gradient-to-b from-slate-900/40 via-slate-900/20 to-transparent p-5 sm:p-7 backdrop-blur-xl shadow-2xl">
         <div className="pointer-events-none absolute -top-10 left-1/4 h-48 w-80 rounded-full bg-brand-600/10 blur-[80px]" />
 
