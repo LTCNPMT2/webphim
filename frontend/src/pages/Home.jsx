@@ -97,6 +97,7 @@ export default function Home() {
         movies={nowShowing.data?.items?.slice(0, 5)}
         loading={nowShowing.loading}
         onBookMovie={handleBookMovie}
+        onPlayTrailer={(movie) => setTrailerMovie(movie)}
       />
 
       {/* 2. Dải Tiện ích & Ưu điểm CineBooking */}
