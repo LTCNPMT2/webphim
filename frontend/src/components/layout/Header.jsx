@@ -73,9 +73,11 @@ export default function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* Logo thương hiệu */}
         <Link to="/" className="flex items-center gap-2.5 text-lg font-extrabold text-white shrink-0 group">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-tr from-brand-600 to-pink-500 text-base shadow-md shadow-brand-500/20 transition duration-300 group-hover:scale-105">
-            🎬
-          </span>
+          <img
+            src="/images/brand-icon.jpg"
+            alt="CineBooking"
+            className="h-10 w-10 rounded-xl object-cover shadow-md shadow-brand-500/25 transition duration-300 group-hover:scale-105"
+          />
           <span className="tracking-tight">
             Cine<span className="text-brand-500">Booking</span>
           </span>

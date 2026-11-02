@@ -115,7 +115,7 @@ const NAV_GROUPS = [
 const linkClass = ({ isActive }) =>
   `group flex items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 cursor-pointer ${
     isActive
-      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
+      ? 'bg-gradient-to-r from-brand-600 to-pink-600 text-white shadow-lg shadow-brand-600/30 font-bold'
       : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
   }`;
 
@@ -136,37 +136,33 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col md:flex-row antialiased selection:bg-indigo-500 selection:text-white font-sans">
+    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col md:flex-row antialiased selection:bg-brand-500 selection:text-white font-sans">
       
       {/* ============================================================== */}
-      {/* SIDEBAR TỐI GIẢN - HIỆN ĐẠI - SIÊU SANG (MODERN SLATE & INDIGO) */}
+      {/* SIDEBAR TỐI GIẢN - HIỆN ĐẠI - SIÊU SANG (CINEBOOKING BRAND THEME) */}
       {/* ============================================================== */}
       <aside className="w-full md:w-68 md:shrink-0 border-b md:border-b-0 md:border-r border-slate-800/80 bg-[#0c101b]/95 backdrop-blur-2xl md:sticky md:top-0 md:h-screen md:flex md:flex-col justify-between z-30 shadow-2xl">
         <div>
-          {/* Logo Studio Hiện Đại */}
+          {/* Logo CineBooking Chuẩn Nhận Diện */}
           <div className="flex h-18 items-center justify-between px-5 border-b border-slate-800/80 bg-[#090d16]/50">
             <Link to="/admin" className="flex items-center gap-3 group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-200">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
+              <img
+                src="/images/brand-icon.jpg"
+                alt="CineBooking"
+                className="h-10 w-10 rounded-xl object-cover shadow-md shadow-brand-500/25 transition duration-200 group-hover:scale-105 shrink-0"
+              />
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-extrabold text-base text-white tracking-tight">
-                    Cine<span className="text-indigo-400">Admin</span>
+                    Cine<span className="text-brand-500">Booking</span>
                   </span>
                 </div>
                 <span className="text-[10px] font-medium tracking-wide text-slate-400 block">
-                  Studio Enterprise
+                  Quản trị viên
                 </span>
               </div>
             </Link>
-
-            <span className="rounded-md bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
-              PRO
-            </span>
           </div>
 
           {/* Danh mục menu */}
@@ -196,7 +192,7 @@ export default function AdminLayout() {
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800 shadow-xs">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-tr from-indigo-500 to-violet-600 text-xs font-bold text-white uppercase shadow-sm">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-tr from-brand-500 to-pink-600 text-xs font-bold text-white uppercase shadow-sm shadow-brand-500/25">
                   {user?.full_name?.trim().charAt(0) || 'A'}
                 </span>
                 <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#090d16]" />
@@ -239,7 +235,7 @@ export default function AdminLayout() {
           <div className="flex items-center gap-3.5 text-xs">
             
             <div className="hidden lg:flex items-center gap-2 text-slate-400 font-mono bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-1.5 shadow-2xs">
-              <span className="text-indigo-400">🕒</span>
+              <span className="text-brand-400">🕒</span>
               <span className="text-slate-200">
                 {currentTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>

@@ -73,7 +73,7 @@ function ShowtimeForm({ showtime, movies, rooms, onClose, onSaved }) {
       </div>
       {showtime && (
         <label className="flex items-center gap-2.5 text-xs font-semibold text-slate-300 cursor-pointer pt-1">
-          <input type="checkbox" name="is_active" checked={v.is_active} onChange={change} className="accent-indigo-500 h-4 w-4 rounded" />
+          <input type="checkbox" name="is_active" checked={v.is_active} onChange={change} className="accent-brand-500 h-4 w-4 rounded" />
           <span>Mở bán vé cho suất chiếu này</span>
         </label>
       )}
@@ -114,7 +114,7 @@ export default function AdminShowtimes() {
       header: 'PHIM ĐIỆN ẢNH',
       render: (s) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-8 shrink-0 overflow-hidden rounded-lg bg-indigo-500/10 border border-indigo-500/20 shadow-xs flex items-center justify-center text-xs text-indigo-400">
+          <div className="h-10 w-8 shrink-0 overflow-hidden rounded-lg bg-brand-500/10 border border-brand-500/20 shadow-xs flex items-center justify-center text-xs text-brand-400">
             🎬
           </div>
           <div className="min-w-0">
@@ -137,7 +137,7 @@ export default function AdminShowtimes() {
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-xs text-slate-400">{s.room_name}</span>
             <span className="text-slate-600">•</span>
-            <span className="text-[10px] font-mono font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-mono font-bold text-brand-300 bg-brand-500/10 border border-brand-500/20 px-1.5 py-0.5 rounded">
               {s.room_type}
             </span>
           </div>
@@ -180,7 +180,7 @@ export default function AdminShowtimes() {
             </div>
             <div className="w-full bg-slate-800/80 h-1.5 rounded-full mt-1.5 overflow-hidden border border-white/5">
               <div
-                className="bg-gradient-to-r from-indigo-500 to-violet-500 h-full rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-brand-500 to-pink-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -214,7 +214,7 @@ export default function AdminShowtimes() {
 
   // Lớp CSS cho các bộ lọc hiện đại chuẩn Enterprise
   const selectCls =
-    'rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 cursor-pointer transition';
+    'rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 cursor-pointer transition';
 
   return (
     <div className="space-y-6">
@@ -270,7 +270,7 @@ export default function AdminShowtimes() {
           <button
             type="button"
             onClick={() => setEditing('new')}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-indigo-600/25 hover:from-indigo-600 hover:to-violet-700 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-pink-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-brand-600/25 hover:from-brand-500 hover:to-pink-500 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <span className="text-sm font-bold leading-none">＋</span>
             <span>Thêm suất chiếu</span>

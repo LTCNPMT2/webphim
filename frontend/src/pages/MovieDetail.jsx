@@ -5,7 +5,7 @@ import { useFetch } from '../hooks/useFetch.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { getMovie, getMovies, getCinemas, getShowtimes, getReviews, saveReview, deleteMyReview, getMyReview } from '../services/catalogService.js';
 import { assetUrl, formatDate, formatDateTime, formatPrice, formatRating, formatTime, toDateKey } from '../utils/format.js';
-import { AGE_COLORS, AGE_LABELS, STATUS_LABELS } from '../utils/constants.js';
+import { AGE_COLORS, AGE_LABELS, STATUS_LABELS, getMapUrlByCity } from '../utils/constants.js';
 import { getYoutubeEmbedUrl } from '../utils/youtube.js';
 import StarRating from '../components/ui/StarRating.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
@@ -599,7 +599,7 @@ export default function MovieDetail() {
                         <p className="text-xs text-slate-400">
                           {cinema.address}, {cinema.city}{' '}
                           <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cinema.name + ' ' + cinema.address)}`}
+                            href={getMapUrlByCity(cinema.city, cinema.address)}
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}

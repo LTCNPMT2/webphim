@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ff1379" />
+      <stop offset="100%" stop-color="#d60064" />
+    </linearGradient>
+  </defs>
+  <!-- Background Squircle with smooth rounded corners -->
+  <rect x="0" y="0" width="100" height="100" rx="26" ry="26" fill="url(#cineGradient)" />
+  <!-- Crisp white CINE text -->
+  <text
+    x="50"
+    y="53"
+    text-anchor="middle"
+    dominant-baseline="central"
+    fill="#ffffff"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Outfit', 'Montserrat', Arial, sans-serif"
+    font-weight="900"
+    font-size="28"
+    letter-spacing="0.5"
+  >CINE</text>
+</svg>
+

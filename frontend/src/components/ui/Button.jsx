@@ -1,8 +1,8 @@
 import Spinner from './Spinner.jsx';
 
 const VARIANTS = {
-  primary: 'bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold shadow-md shadow-indigo-600/25 active:scale-95 transition-all duration-200',
-  brand: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-950/30 active:scale-95 transition-all duration-200',
+  primary: 'bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-500 hover:to-pink-500 text-white font-bold shadow-md shadow-brand-600/25 active:scale-95 transition-all duration-200',
+  brand: 'bg-brand-600 text-white hover:bg-brand-500 shadow-md shadow-brand-950/30 active:scale-95 transition-all duration-200',
   secondary: 'bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200',
   outline: 'border border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200',
   danger: 'border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 shadow-xs transition-all duration-200',

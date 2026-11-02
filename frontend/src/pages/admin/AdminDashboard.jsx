@@ -35,15 +35,15 @@ const shortDate = (d) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
 const shortMonth = (m) => `${m.slice(5, 7)}/${m.slice(2, 4)}`;
 const truncate = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
-function StatCard({ label, value, sub, icon, accent = 'indigo' }) {
+function StatCard({ label, value, sub, icon, accent = 'brand' }) {
   const accents = {
-    indigo: 'from-indigo-500/20 to-indigo-600/5 border-indigo-500/30 text-indigo-400',
+    brand: 'from-brand-500/20 to-brand-600/5 border-brand-500/30 text-brand-400',
+    indigo: 'from-brand-500/20 to-brand-600/5 border-brand-500/30 text-brand-400',
     emerald: 'from-emerald-500/20 to-emerald-600/5 border-emerald-500/30 text-emerald-400',
-    violet: 'from-violet-500/20 to-violet-600/5 border-violet-500/30 text-violet-400',
+    violet: 'from-pink-500/20 to-pink-600/5 border-pink-500/30 text-pink-400',
     sky: 'from-sky-500/20 to-sky-600/5 border-sky-500/30 text-sky-400',
-    brand: 'from-indigo-500/20 to-indigo-600/5 border-indigo-500/30 text-indigo-400',
     amber: 'from-amber-500/20 to-amber-600/5 border-amber-500/30 text-amber-400',
-    purple: 'from-violet-500/20 to-violet-600/5 border-violet-500/30 text-violet-400',
+    purple: 'from-pink-500/20 to-pink-600/5 border-pink-500/30 text-pink-400',
   };
 
   return (
@@ -96,7 +96,7 @@ export function DashboardView({ stats, days, onDaysChange }) {
               onClick={() => onDaysChange(d)}
               className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition cursor-pointer ${
                 days === d
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  ? 'bg-gradient-to-r from-brand-600 to-pink-600 text-white shadow-md shadow-brand-600/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
@@ -107,7 +107,7 @@ export function DashboardView({ stats, days, onDaysChange }) {
       </PageHeader>
 
       {!hasSales && (
-        <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-4 text-sm text-indigo-200 flex items-center gap-3">
+        <div className="rounded-xl border border-brand-500/20 bg-brand-500/10 p-4 text-sm text-brand-200 flex items-center gap-3">
           <span className="text-xl">💡</span>
           <div>
             Chưa có đơn đặt vé nào được thanh toán nên biểu đồ chưa hiển thị số liệu. Hãy chạy file <b>database/demo_sales.sql</b> để nạp 48 đơn hàng mẫu.
@@ -140,8 +140,8 @@ export function DashboardView({ stats, days, onDaysChange }) {
               <AreaChart data={byDay} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke={GRID} vertical={false} />
@@ -152,7 +152,7 @@ export function DashboardView({ stats, days, onDaysChange }) {
                   labelFormatter={shortDate}
                   formatter={(v, name) => (name === 'revenue' ? [formatPrice(v), 'Doanh thu'] : [v, 'Vé'])}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fill="url(#revFill)" />
+                <Area type="monotone" dataKey="revenue" stroke="#f43f5e" strokeWidth={3} fill="url(#revFill)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -172,7 +172,7 @@ export function DashboardView({ stats, days, onDaysChange }) {
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                   formatter={(v) => [formatPrice(v), 'Doanh thu']}
                 />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="revenue" fill="#f43f5e" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -214,12 +214,12 @@ export function DashboardView({ stats, days, onDaysChange }) {
                       <span>🏢</span> {c.name}
                     </span>
                     <span className="text-slate-400 font-medium">
-                      {c.sold}/{c.total} ghế · <b className="text-indigo-400 font-bold">{c.rate}%</b>
+                      {c.sold}/{c.total} ghế · <b className="text-brand-400 font-bold">{c.rate}%</b>
                     </span>
                   </div>
                   <div className="h-2.5 overflow-hidden rounded-full bg-slate-800 p-0.5 border border-slate-700/60">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 shadow-sm"
+                      className="h-full rounded-full bg-gradient-to-r from-brand-500 to-pink-500 transition-all duration-500 shadow-sm"
                       style={{ width: `${Math.min(c.rate, 100)}%` }}
                     />
                   </div>

@@ -26,7 +26,7 @@ export const CINEMAS = [
     city: 'TP. Hồ Chí Minh',
     cityKey: 'hcm',
     phone: '02838000001',
-    mapUrl: 'https://www.google.com/maps/place/Tr%C6%B0%E1%BB%9Dng+%C4%90%E1%BA%A1i+h%E1%BB%8Dc+V%C4%83n+Hi%E1%BA%BFn/@10.7843334,106.6416665,232m/data=!3m1!1e3!4m6!3m5!1s0x31752fe7efcecbd5:0xb4734cea965dd333!8m2!3d10.7846215!4d106.6420233!16s%2Fg%2F11gsbqvgxb?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D',
+    mapUrl: 'https://www.google.com/maps/place/Tr%C6%B0%E1%BB%9Dng+%C4%90%E1%BA%A1i+h%E1%BB%8Dc+V%C4%83n+Hi%E1%BA%BFn/@10.7846268,106.6394484,927m/data=!3m2!1e3!4b1!4m6!3m5!1s0x31752fe7efcecbd5:0xb4734cea965dd333!8m2!3d10.7846215!4d106.6420233!16s%2Fg%2F11gsbqvgxb?hl=vi&entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D',
   },
   {
     id: 2,
@@ -35,7 +35,7 @@ export const CINEMAS = [
     city: 'Hà Nội',
     cityKey: 'hn',
     phone: '02438000002',
-    mapUrl: 'https://www.google.com/maps/place/Trung+t%C3%A2m+Chi%E1%BA%BFu+phim+Qu%E1%BB%91c+gia/@21.0174221,105.8079936,1712m/data=!3m1!1e3!4m6!3m5!1s0x3135ab9ef82fed13:0x1ee04aa292e377a2!8m2!3d21.016816!4d105.8156311!16s%2Fg%2F11f08fxfdq?entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D',
+    mapUrl: 'https://www.google.com/maps/place/Trung+t%C3%A2m+Chi%E1%BA%BFu+phim+Qu%E1%BB%91c+gia/@21.016816,105.8156311,881m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3135ab9ef82fed13:0x1ee04aa292e377a2!8m2!3d21.016816!4d105.8156311!16s%2Fg%2F11f08fxfdq?hl=vi&entry=ttu&g_ep=EgoyMDI2MTAyOC4wIKXMDSoASAFQAw%3D%3D',
   },
 ];
 

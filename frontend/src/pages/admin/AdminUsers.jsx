@@ -48,7 +48,7 @@ export default function AdminUsers() {
     { key: 'name', header: 'Họ tên', render: (u) => <span className="font-semibold">{u.full_name}{u.id === me?.id && <span className="ml-2 text-xs font-normal text-brand-400">(Bạn)</span>}</span> },
     { key: 'email', header: 'Email', render: (u) => u.email },
     { key: 'phone', header: 'Điện thoại', render: (u) => u.phone || '—' },
-    { key: 'role', header: 'Vai trò', render: (u) => (u.role === 'admin' ? <Badge cls="bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">Quản trị</Badge> : <Badge>Thành viên</Badge>) },
+    { key: 'role', header: 'Vai trò', render: (u) => (u.role === 'admin' ? <Badge cls="bg-brand-500/15 text-brand-400 border border-brand-500/30">Quản trị</Badge> : <Badge>Thành viên</Badge>) },
     { key: 'status', header: 'Trạng thái', render: (u) => <ActiveBadge active={Boolean(u.is_active)} on="Hoạt động" off="Bị khóa" /> },
     { key: 'bookings', header: 'Đơn đã trả tiền', render: (u) => u.paid_bookings },
     { key: 'spent', header: 'Tổng chi tiêu', render: (u) => formatPrice(u.total_spent) },
@@ -61,7 +61,7 @@ export default function AdminUsers() {
       </button>) },
   ];
 
-  const field = 'rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 transition';
+  const field = 'rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 transition';
   const locking = target?.is_active;
 
   return (

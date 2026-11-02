@@ -353,13 +353,13 @@ export default function AdminMovies() {
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="🔍 Tìm theo tên tác phẩm..."
           aria-label="Tìm phim"
-          className="w-60 rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 transition"
+          className="w-60 rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 transition"
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           aria-label="Lọc trạng thái"
-          className="rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 cursor-pointer transition"
+          className="rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 cursor-pointer transition"
         >
           <option value="">🎬 Mọi trạng thái</option>
           {Object.entries(STATUS_LABELS).map(([k, label]) => (

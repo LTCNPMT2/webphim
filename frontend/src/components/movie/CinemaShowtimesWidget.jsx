@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch.js';
 import { getCinemas, getMovies, getShowtimes } from '../../services/catalogService.js';
 import { assetUrl, formatTime, toDateKey } from '../../utils/format.js';
+import { getMapUrlByCity } from '../../utils/constants.js';
 import MoMoBookingModal from '../booking/MoMoBookingModal.jsx';
 
 // Danh sách các loại phòng chiếu & trải nghiệm công nghệ của hệ thống rạp CINE khớp với Admin
@@ -343,15 +344,19 @@ export default function CinemaShowtimesWidget() {
   }, [dbShowtimesFetch.data, currentCinema, dbMoviesFetch.data, selectedRoomType]);
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 px-2 sm:px-4 font-sans">
+    <div className="w-full font-sans">
       
       {/* 1. Tiêu đề chính giữa */}
       <div className="text-center mb-6">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#d82d8b] tracking-tight flex items-center justify-center gap-2">
-          <span>🎬</span>
-          <span>Lịch chiếu phim</span>
+        <h2 className="text-2xl sm:text-3xl font-black text-[#d82d8b] tracking-tight flex items-center justify-center gap-2.5">
+          <img
+            src="/images/cine-badge.png"
+            alt="CINE"
+            className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg object-contain shadow-sm"
+          />
+          <span>Lịch Chiếu Phim</span>
         </h2>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+        <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
           Hệ thống cụm rạp CINE Cinema hiện đại tại TP. Hồ Chí Minh & Hà Nội
         </p>
       </div>
@@ -454,8 +459,8 @@ export default function CinemaShowtimesWidget() {
       {/* 3. Khung hiển thị Lịch chiếu: Chia 2 Cột (Trái: Danh sách rạp CINE, Phải: Lịch suất chiếu) */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-md grid grid-cols-1 md:grid-cols-12 min-h-[560px]">
         
-        {/* CỘT TRÁI: Tìm kiếm & Danh sách cụm rạp CINE (md:col-span-4) */}
-        <div className="md:col-span-4 border-r border-slate-200 flex flex-col bg-white">
+        {/* CỘT TRÁI: Tìm kiếm & Danh sách cụm rạp CINE */}
+        <div className="md:col-span-5 lg:col-span-4 xl:col-span-3 border-r border-slate-200 flex flex-col bg-white">
           
           {/* Ô tìm kiếm theo tên rạp hoặc khu vực */}
           <div className="p-3 border-b border-slate-100 relative">
@@ -542,8 +547,8 @@ export default function CinemaShowtimesWidget() {
           </div>
         </div>
 
-        {/* CỘT PHẢI: Chi tiết rạp, dải ngày & lịch chiếu phim (md:col-span-8) */}
-        <div className="md:col-span-8 flex flex-col bg-white">
+        {/* CỘT PHẢI: Chi tiết rạp, dải ngày & lịch chiếu phim */}
+        <div className="md:col-span-7 lg:col-span-8 xl:col-span-9 flex flex-col bg-white">
           
           {/* Header thông tin rạp đang chọn */}
           <div className="p-4 border-b border-slate-100 bg-slate-50/60 flex items-start gap-3">
@@ -563,9 +568,7 @@ export default function CinemaShowtimesWidget() {
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 {currentCinema?.address}
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    (currentCinema?.name || '') + ' ' + (currentCinema?.address || '')
-                  )}`}
+                  href={getMapUrlByCity(currentCinema?.city, currentCinema?.address)}
                   target="_blank"
                   rel="noreferrer"
                   className="ml-2 font-medium text-sky-600 hover:text-sky-700 hover:underline"

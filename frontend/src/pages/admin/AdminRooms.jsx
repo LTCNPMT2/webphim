@@ -113,7 +113,7 @@ function EditRoomForm({ room, onClose, onSaved }) {
   );
 }
 
-const SEAT_CLS = { standard: 'bg-slate-700 text-slate-200', vip: 'bg-indigo-950/60 border-indigo-500/60 text-indigo-200', couple: 'bg-pink-900/40 border-pink-500/70 text-pink-200' };
+const SEAT_CLS = { standard: 'bg-slate-700 text-slate-200', vip: 'bg-brand-950/60 border-brand-500/60 text-brand-200', couple: 'bg-pink-900/40 border-pink-500/70 text-pink-200' };
 
 function SeatsModal({ room, onClose }) {
   const { data, error, reload } = useFetch(() => getRoomSeats(room.id), [room.id]);
@@ -180,7 +180,7 @@ export default function AdminRooms() {
     <div>
       <PageHeader title="Quản lý phòng chiếu & Ghế VIP" subtitle="Mỗi phòng chiếu sẽ tự động tạo lập sơ đồ ghế VIP, Sweetbox chuẩn CINE Cinema.">
         <select value={cinemaId} onChange={(e) => setCinemaId(e.target.value)} aria-label="Lọc theo rạp"
-          className="rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 cursor-pointer transition">
+          className="rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 cursor-pointer transition">
           <option value="">🏛️ Mọi cụm rạp</option>
           {(cinemas.data || []).map((c) => <option key={c.id} value={c.id} className="bg-slate-900 text-white">{c.name}</option>)}
         </select>

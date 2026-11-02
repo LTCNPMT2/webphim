@@ -35,8 +35,8 @@ export default function MovieSectionSlider({
   };
 
   return (
-    <section className="relative py-6">
-      {/* Tiêu đề mục */}
+    <div className="relative py-2">
+      {/* Tiêu đề mục (nếu truyền qua props) */}
       {title && (
         <h2 className={`text-2xl sm:text-3xl font-black text-center tracking-tight mb-7 ${titleClassName}`}>
           {title}
@@ -45,8 +45,8 @@ export default function MovieSectionSlider({
 
       {/* Loading Skeleton */}
       {loading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
+          {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="space-y-2">
               <Skeleton className="aspect-[2/3] w-full rounded-2xl" />
               <Skeleton className="h-4 w-3/4" />
@@ -64,7 +64,7 @@ export default function MovieSectionSlider({
               type="button"
               onClick={() => scroll('left')}
               aria-label="Xem phim trước"
-              className="absolute -left-3 sm:-left-5 top-1/3 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white text-slate-900 shadow-xl transition duration-200 hover:scale-110 hover:bg-slate-100"
+              className="absolute -left-3 sm:-left-4 top-1/3 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-xl transition duration-200 hover:scale-110 hover:bg-white cursor-pointer"
             >
               <svg className="h-5 w-5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -76,13 +76,13 @@ export default function MovieSectionSlider({
           <div
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex gap-4 sm:gap-5 overflow-x-auto pb-4 pt-1 scrollbar-none scroll-smooth snap-x snap-mandatory px-1"
+            className="flex gap-4 overflow-x-auto pb-4 pt-1 scrollbar-none scroll-smooth snap-x snap-mandatory px-1"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {movies.map((movie, index) => (
               <div
                 key={movie.id}
-                className="w-[calc(50%-8px)] sm:w-[calc(33.333%-14px)] md:w-[calc(25%-15px)] lg:w-[calc(20%-16px)] shrink-0 snap-start"
+                className="w-[calc(50%-8px)] min-w-[155px] sm:w-[calc(33.333%-11px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-13px)] xl:w-[calc(16.666%-14px)] 2xl:w-[calc(14.285%-14px)] shrink-0 snap-start"
               >
                 <MovieCard
                   movie={movie}
@@ -93,13 +93,13 @@ export default function MovieSectionSlider({
             ))}
           </div>
 
-          {/* Nút lướt sang phải (hình tròn trắng giống ảnh MoMo) */}
+          {/* Nút lướt sang phải */}
           {canScrollRight && movies.length > 3 && (
             <button
               type="button"
               onClick={() => scroll('right')}
               aria-label="Xem thêm phim"
-              className="absolute -right-3 sm:-right-5 top-1/3 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white text-slate-900 shadow-xl transition duration-200 hover:scale-110 hover:bg-slate-100"
+              className="absolute -right-3 sm:-right-4 top-1/3 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white/95 text-slate-900 shadow-xl transition duration-200 hover:scale-110 hover:bg-white cursor-pointer"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -108,6 +108,6 @@ export default function MovieSectionSlider({
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }

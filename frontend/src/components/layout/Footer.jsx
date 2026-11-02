@@ -11,9 +11,11 @@ export default function Footer() {
           {/* Cột 1: Thông tin thương hiệu */}
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="inline-flex items-center gap-2.5 text-xl font-extrabold text-white group">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-tr from-brand-600 to-pink-500 text-lg shadow-lg shadow-brand-500/25">
-                🎬
-              </span>
+              <img
+                src="/images/brand-icon.jpg"
+                alt="CineBooking"
+                className="h-11 w-11 rounded-xl object-cover shadow-lg shadow-brand-500/25 transition duration-300 group-hover:scale-105"
+              />
               <span className="tracking-tight text-2xl font-black">
                 Cine<span className="text-brand-500">Booking</span>
               </span>
