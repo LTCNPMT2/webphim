@@ -17,7 +17,6 @@ export default function Login() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
 
   // Đã đăng nhập thì chuyển hướng
   if (user) return <Navigate to={from} replace />;
@@ -54,29 +53,6 @@ export default function Login() {
     }
   };
 
-  // Nạp nhanh tài khoản mẫu
-  const fillQuickAccount = (email, password) => {
-    setForm({ email, password });
-    setErrors({});
-    setFormError('');
-  };
-
-  // Đăng nhập nhanh Google Demo (dành cho kiểm thử / chấm đồ án)
-  const handleQuickDemoGoogle = async () => {
-    setDemoLoading(true);
-    try {
-      await loginWithGoogle({
-        isDemo: true,
-        demoEmail: 'google.user@cinema.vn',
-        demoName: 'Khách hàng Google',
-      });
-      toast.success('Đăng nhập thành công với tài khoản Google Test!');
-    } catch (err) {
-      toast.error(getErrorMessage(err) || 'Đăng nhập Google Demo thất bại');
-    } finally {
-      setDemoLoading(false);
-    }
-  };
 
   return (
     <div className="relative min-h-[calc(100vh-140px)] py-8 sm:py-14 flex items-center justify-center">
@@ -95,10 +71,10 @@ export default function Login() {
                 CINEMA LUXE EXPERIENCE
               </div>
               <h1 className="text-4xl font-black tracking-tight text-white leading-tight">
-                Thưởng thức điện ảnh đỉnh cao, <span className="text-gradient-gold">tiện lợi mọi lúc.</span>
+                Bước vào thế giới điện ảnh, <span className="text-gradient-gold">trọn vẹn từng khoảnh khắc.</span>
               </h1>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Đăng nhập ngay để tận hưởng công nghệ phòng chiếu hiện đại chuẩn quốc tế, giữ chỗ trực tuyến tức thì và nhận vô vàn ưu đãi bắp nước độc quyền.
+                Đăng nhập để đắm chìm trong không gian phòng chiếu chuẩn quốc tế với hình ảnh sắc nét, âm thanh sống động. Giữ ghế đẹp chỉ trong một chạm và đón nhận những ưu đãi bắp nước dành riêng cho bạn.
               </p>
             </div>
 
@@ -109,8 +85,8 @@ export default function Login() {
                   🎟️
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Giữ chỗ tức thì 10 phút</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">Thanh toán VietQR / SePay tự động, vé điện tử gửi về tài khoản ngay.</p>
+                  <h4 className="text-sm font-bold text-white">Giữ chỗ tức thì trong 10 phút</h4>
+                  <p className="text-xs text-slate-400 mt-0.5">Chọn ghế yêu thích, thanh toán nhanh qua VietQR / SePay, vé điện tử gửi ngay vào tài khoản của bạn.</p>
                 </div>
               </div>
 
@@ -119,8 +95,8 @@ export default function Login() {
                   🍿
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Combo bắp nước đa dạng</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">Đặt trước combo yêu thích, nhận trực tiếp tại rạp không lo xếp hàng.</p>
+                  <h4 className="text-sm font-bold text-white">Combo bắp nước hấp dẫn</h4>
+                  <p className="text-xs text-slate-400 mt-0.5">Đặt trước combo yêu thích, nhận tại quầy không cần xếp hàng, trọn vẹn thời gian cho bộ phim.</p>
                 </div>
               </div>
 
@@ -129,14 +105,14 @@ export default function Login() {
                   ⚡
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Đăng nhập một chạm Google</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">Xác thực bảo mật chính thức qua Google Identity Services.</p>
+                  <h4 className="text-sm font-bold text-white">Đăng nhập một chạm với Google</h4>
+                  <p className="text-xs text-slate-400 mt-0.5">Truy cập nhanh chóng, an toàn nhờ xác thực chính thức từ Google, không cần nhớ thêm mật khẩu.</p>
                 </div>
               </div>
             </div>
 
             <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs text-slate-500">
-              <span>Hỗ trợ 24/7: 1900 8888</span>
+              <span>Hỗ trợ 24/7: 1900 6868</span>
               <span>Bảo mật dữ liệu 100%</span>
             </div>
           </div>
@@ -238,41 +214,6 @@ export default function Login() {
                 <Link to="/register" className="font-bold text-amber-400 hover:text-amber-300 hover:underline">
                   Đăng ký tài khoản mới
                 </Link>
-              </div>
-
-              {/* Thanh chọn nhanh tài khoản kiểm thử */}
-              <div className="mt-6 pt-5 border-t border-white/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Kiểm thử nhanh (Demo):
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleQuickDemoGoogle}
-                    disabled={demoLoading}
-                    className="text-[11px] font-bold text-brand-400 hover:text-brand-300 transition flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>⚡ Google Demo</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => fillQuickAccount('admin@cinema.vn', 'password')}
-                    className="rounded-lg border border-white/5 bg-slate-950/50 px-2.5 py-1.5 text-left text-[11px] text-slate-300 hover:border-brand-500/40 hover:bg-slate-800 transition"
-                  >
-                    <span className="block font-bold text-amber-400">Admin</span>
-                    <span className="text-[10px] text-slate-500">admin@cinema.vn</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillQuickAccount('user@cinema.vn', 'password')}
-                    className="rounded-lg border border-white/5 bg-slate-950/50 px-2.5 py-1.5 text-left text-[11px] text-slate-300 hover:border-brand-500/40 hover:bg-slate-800 transition"
-                  >
-                    <span className="block font-bold text-sky-400">User</span>
-                    <span className="text-[10px] text-slate-500">user@cinema.vn</span>
-                  </button>
-                </div>
               </div>
 
             </div>
