@@ -28,10 +28,11 @@ import AdminShowtimes from './pages/admin/AdminShowtimes.jsx';
 import AdminCombos from './pages/admin/AdminCombos.jsx';
 import AdminPromotions from './pages/admin/AdminPromotions.jsx';
 import AdminBookings from './pages/admin/AdminBookings.jsx';
+import AdminTicketCheckin from './pages/admin/AdminTicketCheckin.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
 import RequirePhoneModal from './components/auth/RequirePhoneModal.jsx';
 
-// Bản đồ trang: website cho khách (Layout chung) và khu quản trị (AdminLayout riêng, chỉ role admin)
+// Bản đồ trang: website cho khách (Layout chung) và khu quản trị (AdminLayout riêng, dành cho Admin và Staff có phân quyền)
 export default function App() {
   return (
     <>
@@ -61,7 +62,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
 
-        {/* Khu quản trị: chỉ admin, không dùng Header/Footer của website */}
+        {/* Khu quản trị & nhân viên: bảo vệ bởi AdminRoute, không dùng Header/Footer của website khách */}
         <Route element={<AdminRoute />}>
           <Route path="admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
@@ -73,6 +74,7 @@ export default function App() {
             <Route path="combos" element={<AdminCombos />} />
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="bookings" element={<AdminBookings />} />
+            <Route path="checkin" element={<AdminTicketCheckin />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="*" element={<NotFound />} />
           </Route>

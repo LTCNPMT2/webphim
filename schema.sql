@@ -42,7 +42,9 @@ CREATE TABLE users (
   password_hash VARCHAR(255) NOT NULL,              -- lưu hash bcrypt, KHÔNG lưu mật khẩu thô
   phone         VARCHAR(20)  NULL,
   avatar_url    VARCHAR(255) NULL,
-  role          ENUM('user','admin') NOT NULL DEFAULT 'user',
+  role          ENUM('user','staff','admin') NOT NULL DEFAULT 'user',
+  staff_title   VARCHAR(100) NULL,
+  permissions   TEXT         NULL,                  -- danh sách mã quyền JSON: ["movies:manage", ...]
   is_active     TINYINT(1)   NOT NULL DEFAULT 1,    -- 0 = bị khóa tài khoản
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -221,6 +223,8 @@ CREATE TABLE bookings (
   status          ENUM('pending','paid','cancelled','expired') NOT NULL DEFAULT 'pending',
   expires_at      DATETIME     NULL,
   cancelled_at    DATETIME     NULL,
+  checked_in_at   DATETIME     NULL,                  -- thời điểm soát vé vào phòng chiếu
+  checked_in_by   INT UNSIGNED NULL,                  -- nhân viên thực hiện soát vé
   created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),

@@ -8,12 +8,23 @@ exports.list = async ({ status, date_from, date_to, search }, { limit, offset })
   const conds = [];
   const params = [];
 
-  if (status === 'expired') conds.push("(b.status = 'expired' OR (b.status = 'pending' AND b.expires_at <= NOW()))");
-  else if (status === 'pending') conds.push("(b.status = 'pending' AND b.expires_at > NOW())");
-  else if (status) { conds.push('b.status = ?'); params.push(String(status)); }
+  if (status === 'expired') {
+    conds.push("(b.status = 'expired' OR (b.status = 'pending' AND b.expires_at <= NOW()))");
+  } else if (status === 'pending') {
+    conds.push("(b.status = 'pending' AND b.expires_at > NOW())");
+  } else if (status) {
+    conds.push('b.status = ?');
+    params.push(String(status));
+  }
 
-  if (date_from) { conds.push('b.created_at >= CAST(? AS DATETIME)'); params.push(`${date_from} 00:00:00`); }
-  if (date_to) { conds.push('b.created_at < DATE_ADD(CAST(? AS DATETIME), INTERVAL 1 DAY)'); params.push(`${date_to} 00:00:00`); }
+  if (date_from) {
+    conds.push('b.created_at >= CAST(? AS DATETIME)');
+    params.push(`${date_from} 00:00:00`);
+  }
+  if (date_to) {
+    conds.push('b.created_at < DATE_ADD(CAST(? AS DATETIME), INTERVAL 1 DAY)');
+    params.push(`${date_to} 00:00:00`);
+  }
   if (search) {
     conds.push('(b.booking_code LIKE ? OR u.email LIKE ? OR u.full_name LIKE ?)');
     const like = `%${escapeLike(String(search).trim())}%`;
@@ -26,10 +37,12 @@ exports.list = async ({ status, date_from, date_to, search }, { limit, offset })
      JOIN showtimes s ON s.id = b.showtime_id
      JOIN movies m ON m.id = s.movie_id
      JOIN rooms r ON r.id = s.room_id
-     JOIN cinemas c ON c.id = r.cinema_id`;
+     JOIN cinemas c ON c.id = r.cinema_id
+     LEFT JOIN users staff ON staff.id = b.checked_in_by`;
 
   const [rows] = await pool.execute(
     `SELECT b.id, b.booking_code, ${EFFECTIVE_STATUS} AS status, b.total_amount, b.created_at,
+            b.checked_in_at, b.checked_in_by, staff.full_name AS checked_in_by_name,
             u.id AS user_id, u.full_name, u.email,
             m.title AS movie_title, c.name AS cinema_name, r.name AS room_name, s.start_time,
             (SELECT GROUP_CONCAT(CONCAT(se.row_label, se.seat_number) ORDER BY se.row_label, se.seat_number SEPARATOR ', ')

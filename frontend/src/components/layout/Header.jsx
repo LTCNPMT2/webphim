@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { buttonClass } from '../ui/Button.jsx';
 
 export default function Header() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, isStaff, isManagement, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -241,7 +241,19 @@ export default function Header() {
               {userOpen && (
                 <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 py-1.5 shadow-2xl z-50">
                   <div className="border-b border-slate-800 px-4 py-2.5">
-                    <p className="truncate text-sm font-semibold text-white">{user.full_name}</p>
+                    <div className="flex items-center justify-between gap-1.5">
+                      <p className="truncate text-sm font-semibold text-white">{user.full_name}</p>
+                      {isAdmin && (
+                        <span className="shrink-0 rounded bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-300 border border-amber-500/30">
+                          Quản trị
+                        </span>
+                      )}
+                      {isStaff && (
+                        <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300 border border-emerald-500/30">
+                          {user.staff_title || 'Nhân viên'}
+                        </span>
+                      )}
+                    </div>
                     <p className="truncate text-xs text-slate-400">{user.email}</p>
                   </div>
                   <Link to="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
@@ -250,9 +262,13 @@ export default function Header() {
                   <Link to="/my-bookings" className="flex items-center gap-2 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800">
                     <span>🎟️</span> Vé của tôi
                   </Link>
-                  {isAdmin && (
-                    <Link to="/admin" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-400 hover:bg-slate-800">
-                      <span>⚙️</span> Trang quản trị
+                  {isManagement && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold hover:bg-slate-800 text-amber-400"
+                    >
+                      <span>{isAdmin ? '⚙️' : '💼'}</span>
+                      <span>{isAdmin ? 'Trang quản trị' : 'Khu vực nhân viên'}</span>
                     </Link>
                   )}
                   <div className="my-1 border-t border-slate-800" />
@@ -374,7 +390,43 @@ export default function Header() {
               Vé của tôi
             </Link>
 
-            {!user && (
+            {user ? (
+              <div className="mt-3 pt-3 border-t border-slate-800 space-y-1">
+                <div className="px-3 py-1.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-white">{user.full_name}</p>
+                    <p className="text-[10px] text-slate-400">{user.email}</p>
+                  </div>
+                  {isAdmin && (
+                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-300 border border-amber-500/30">
+                      Quản trị
+                    </span>
+                  )}
+                  {isStaff && (
+                    <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300 border border-emerald-500/30">
+                      {user.staff_title || 'Nhân viên'}
+                    </span>
+                  )}
+                </div>
+                <Link to="/profile" className="block rounded-lg px-3 py-1.5 text-xs text-slate-300 hover:text-white">
+                  👤 Hồ sơ cá nhân
+                </Link>
+                {isManagement && (
+                  <Link
+                    to="/admin"
+                    className="block rounded-lg px-3 py-1.5 text-xs font-semibold text-amber-400"
+                  >
+                    {isAdmin ? '⚙️ Trang quản trị' : '💼 Khu vực nhân viên'}
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-400 hover:text-rose-300 cursor-pointer"
+                >
+                  🚪 Đăng xuất
+                </button>
+              </div>
+            ) : (
               <div className="mt-4 flex gap-2 pt-2 border-t border-slate-800">
                 <Link to="/login" className={buttonClass('outline', 'md', 'flex-1 text-center')}>
                   Đăng nhập

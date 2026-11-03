@@ -43,5 +43,18 @@ export const deletePromotion = (id) => api.delete(`/admin/promotions/${id}`);
 export const getBookings = (params) => api.get('/admin/bookings', { params }).then(unwrap); // { items, pagination }
 export const cancelBooking = (id) => api.put(`/admin/bookings/${id}/cancel`).then((res) => res.data.data.booking);
 
+// Soát vé & Check-in tại quầy
+export const verifyTicket = (code) =>
+  api.get(`/admin/bookings/verify/${encodeURIComponent(code)}`).then((res) => res.data.data.ticket);
+export const checkInTicket = (booking_code) =>
+  api.post('/admin/bookings/check-in', { booking_code }).then((res) => res.data.data.ticket);
+
+// Người dùng & Phân quyền nhân viên
 export const getUsers = (params) => api.get('/admin/users', { params }).then(unwrap); // { items, pagination }
-export const setUserStatus = (id, isActive) => api.put(`/admin/users/${id}/status`, { is_active: isActive }).then((res) => res.data.data.user);
+export const setUserStatus = (id, isActive) =>
+  api.put(`/admin/users/${id}/status`, { is_active: isActive }).then((res) => res.data.data.user);
+export const updateUserRole = (id, data) =>
+  api.put(`/admin/users/${id}/role`, data).then((res) => res.data.data.user);
+export const createStaff = (data) =>
+  api.post('/admin/users/staff', data).then((res) => res.data.data.user);
+export const getPermissionsList = () => api.get('/admin/permissions').then(unwrap);

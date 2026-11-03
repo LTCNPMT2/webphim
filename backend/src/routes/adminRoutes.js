@@ -1,6 +1,7 @@
-// Toàn bộ route /api/admin/*: bắt buộc đăng nhập VÀ có role admin
+// Toàn bộ route /api/admin/*: bắt buộc đăng nhập (admin hoặc staff)
+// Mỗi chức năng được kiểm soát chặt chẽ theo vai trò và quyền hạn (RBAC)
 const router = require('express').Router();
-const { verifyToken, requireRole } = require('../middlewares/auth');
+const { verifyToken, requireRole, requirePermission, requireAnyPermission } = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
 const { uploadMovieImages, uploadComboImage } = require('../middlewares/upload');
 const { query } = require('express-validator');
@@ -24,65 +25,95 @@ const { genreRules } = require('../validators/genreValidator');
 const { createCinemaRules, updateCinemaRules } = require('../validators/cinemaValidator');
 const { listRoomRules, createRoomRules, updateRoomRules } = require('../validators/roomValidator');
 const {
-  createShowtimeRules, updateShowtimeRules, adminListShowtimeRules,
+  createShowtimeRules,
+  updateShowtimeRules,
+  adminListShowtimeRules,
 } = require('../validators/showtimeValidator');
 
 const { createComboRules, updateComboRules } = require('../validators/comboValidator');
 const { createPromotionRules, updatePromotionRules } = require('../validators/promotionValidator');
-const { statsRules, listUserRules, userStatusRules, listAdminBookingRules } = require('../validators/adminValidator');
+const {
+  statsRules,
+  listUserRules,
+  userStatusRules,
+  userRoleRules,
+  createStaffRules,
+  checkInRules,
+  listAdminBookingRules,
+} = require('../validators/adminValidator');
 
-router.use(verifyToken, requireRole('admin')); // áp dụng cho mọi route bên dưới
+// Bắt buộc đăng nhập và là admin hoặc staff
+router.use(verifyToken, requireRole('admin', 'staff'));
 
-// ----- Phim (multipart/form-data nếu có ảnh: field "poster", "banner"; hoặc JSON nếu không) -----
-router.post('/movies', uploadMovieImages, createMovieRules, validate, movie.create);
-router.put('/movies/:id', uploadMovieImages, idParam, updateMovieRules, validate, movie.update);
-router.delete('/movies/:id', idParam, validate, movie.remove);
-
-// ----- Thể loại -----
-router.post('/genres', genreRules, validate, genre.create);
-router.put('/genres/:id', idParam, genreRules, validate, genre.update);
-router.delete('/genres/:id', idParam, validate, genre.remove);
-
-// ----- Rạp -----
-router.get('/cinemas', cityQuery, validate, cinema.adminList);
-router.post('/cinemas', createCinemaRules, validate, cinema.create);
-router.put('/cinemas/:id', idParam, updateCinemaRules, validate, cinema.update);
-router.delete('/cinemas/:id', idParam, validate, cinema.remove);
-
-// ----- Phòng chiếu (tạo phòng sẽ tự sinh sơ đồ ghế) -----
-router.get('/rooms', listRoomRules, validate, room.list);
-router.get('/rooms/:id/seats', idParam, validate, room.getSeats);
-router.post('/rooms', createRoomRules, validate, room.create);
-router.put('/rooms/:id', idParam, updateRoomRules, validate, room.update);
-router.delete('/rooms/:id', idParam, validate, room.remove);
-
-// ----- Suất chiếu -----
-router.get('/showtimes', adminListShowtimeRules, validate, showtime.adminList);
-router.post('/showtimes', createShowtimeRules, validate, showtime.create);
-router.put('/showtimes/:id', idParam, updateShowtimeRules, validate, showtime.update);
-router.delete('/showtimes/:id', idParam, validate, showtime.remove);
-
-// ----- Combo bắp nước -----
-router.get('/combos', comboAdmin.list);
-router.post('/combos', uploadComboImage, createComboRules, validate, comboAdmin.create);
-router.put('/combos/:id', uploadComboImage, idParam, updateComboRules, validate, comboAdmin.update);
-router.delete('/combos/:id', idParam, validate, comboAdmin.remove);
-
-// ----- Mã giảm giá -----
-router.get('/promotions', promotionAdmin.list);
-router.post('/promotions', createPromotionRules, validate, promotionAdmin.create);
-router.put('/promotions/:id', idParam, updatePromotionRules, validate, promotionAdmin.update);
-router.delete('/promotions/:id', idParam, validate, promotionAdmin.remove);
-
-// ----- Đơn đặt vé (xem chi tiết 1 đơn dùng GET /api/bookings/:id, admin được phép xem mọi đơn) -----
-router.get('/bookings', listAdminBookingRules, validate, adminBooking.list);
-router.put('/bookings/:id/cancel', idParam, validate, adminBooking.cancel);
-
-// ----- Người dùng -----
-router.get('/users', listUserRules, validate, adminUser.list);
-router.put('/users/:id/status', idParam, userStatusRules, validate, adminUser.setStatus);
+// ----- Danh mục quyền hạn và vai trò mẫu -----
+router.get('/permissions', adminUser.getPermissions);
 
 // ----- Thống kê cho Dashboard -----
-router.get('/stats', statsRules, validate, stats.get);
+router.get('/stats', requirePermission('dashboard:view'), statsRules, validate, stats.get);
+
+// ----- Phim (multipart/form-data nếu có ảnh: field "poster", "banner"; hoặc JSON nếu không) -----
+router.post('/movies', requirePermission('movies:manage'), uploadMovieImages, createMovieRules, validate, movie.create);
+router.put('/movies/:id', requirePermission('movies:manage'), uploadMovieImages, idParam, updateMovieRules, validate, movie.update);
+router.delete('/movies/:id', requirePermission('movies:manage'), idParam, validate, movie.remove);
+
+// ----- Thể loại -----
+router.post('/genres', requirePermission('genres:manage'), genreRules, validate, genre.create);
+router.put('/genres/:id', requirePermission('genres:manage'), idParam, genreRules, validate, genre.update);
+router.delete('/genres/:id', requirePermission('genres:manage'), idParam, validate, genre.remove);
+
+// ----- Rạp -----
+router.get('/cinemas', requirePermission('cinemas:manage'), cityQuery, validate, cinema.adminList);
+router.post('/cinemas', requirePermission('cinemas:manage'), createCinemaRules, validate, cinema.create);
+router.put('/cinemas/:id', requirePermission('cinemas:manage'), idParam, updateCinemaRules, validate, cinema.update);
+router.delete('/cinemas/:id', requirePermission('cinemas:manage'), idParam, validate, cinema.remove);
+
+// ----- Phòng chiếu (tạo phòng sẽ tự sinh sơ đồ ghế) -----
+router.get('/rooms', requirePermission('rooms:manage'), listRoomRules, validate, room.list);
+router.get('/rooms/:id/seats', requirePermission('rooms:manage'), idParam, validate, room.getSeats);
+router.post('/rooms', requirePermission('rooms:manage'), createRoomRules, validate, room.create);
+router.put('/rooms/:id', requirePermission('rooms:manage'), idParam, updateRoomRules, validate, room.update);
+router.delete('/rooms/:id', requirePermission('rooms:manage'), idParam, validate, room.remove);
+
+// ----- Suất chiếu -----
+router.get('/showtimes', requirePermission('showtimes:manage'), adminListShowtimeRules, validate, showtime.adminList);
+router.post('/showtimes', requirePermission('showtimes:manage'), createShowtimeRules, validate, showtime.create);
+router.put('/showtimes/:id', requirePermission('showtimes:manage'), idParam, updateShowtimeRules, validate, showtime.update);
+router.delete('/showtimes/:id', requirePermission('showtimes:manage'), idParam, validate, showtime.remove);
+
+// ----- Combo bắp nước -----
+router.get('/combos', requirePermission('combos:manage'), comboAdmin.list);
+router.post('/combos', requirePermission('combos:manage'), uploadComboImage, createComboRules, validate, comboAdmin.create);
+router.put('/combos/:id', requirePermission('combos:manage'), uploadComboImage, idParam, updateComboRules, validate, comboAdmin.update);
+router.delete('/combos/:id', requirePermission('combos:manage'), idParam, validate, comboAdmin.remove);
+
+// ----- Mã giảm giá -----
+router.get('/promotions', requirePermission('promotions:manage'), promotionAdmin.list);
+router.post('/promotions', requirePermission('promotions:manage'), createPromotionRules, validate, promotionAdmin.create);
+router.put('/promotions/:id', requirePermission('promotions:manage'), idParam, updatePromotionRules, validate, promotionAdmin.update);
+router.delete('/promotions/:id', requirePermission('promotions:manage'), idParam, validate, promotionAdmin.remove);
+
+// ----- Đơn đặt vé -----
+router.get('/bookings', requirePermission('bookings:manage'), listAdminBookingRules, validate, adminBooking.list);
+router.put('/bookings/:id/cancel', requirePermission('bookings:manage'), idParam, validate, adminBooking.cancel);
+
+// ----- Soát vé & Check-in tại quầy -----
+router.get(
+  '/bookings/verify/:code',
+  requireAnyPermission('bookings:manage', 'tickets:checkin'),
+  adminBooking.verifyTicket
+);
+router.post(
+  '/bookings/check-in',
+  requireAnyPermission('bookings:manage', 'tickets:checkin'),
+  checkInRules,
+  validate,
+  adminBooking.checkIn
+);
+
+// ----- Khách hàng & Phân quyền nhân viên (Chỉ Admin hoặc ai có quyền users:manage) -----
+router.get('/users', requirePermission('users:manage'), listUserRules, validate, adminUser.list);
+router.post('/users/staff', requirePermission('users:manage'), createStaffRules, validate, adminUser.createStaff);
+router.put('/users/:id/status', requirePermission('users:manage'), idParam, userStatusRules, validate, adminUser.setStatus);
+router.put('/users/:id/role', requirePermission('users:manage'), idParam, userRoleRules, validate, adminUser.setRole);
 
 module.exports = router;

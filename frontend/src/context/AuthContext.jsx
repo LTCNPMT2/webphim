@@ -37,8 +37,10 @@ export function AuthProvider({ children }) {
       const cleaned = existing.filter((t) => {
         const ticketUserId = t.user_id || t.user?.id;
         const ticketEmail = (t.user_email || t.user?.email || '').toLowerCase().trim();
-        return (ticketUserId && String(ticketUserId) === String(currentUser?.id)) ||
-               (ticketEmail && currentEmail && ticketEmail === currentEmail);
+        return (
+          (ticketUserId && String(ticketUserId) === String(currentUser?.id)) ||
+          (ticketEmail && currentEmail && ticketEmail === currentEmail)
+        );
       });
       localStorage.setItem('momo_paid_tickets', JSON.stringify(cleaned));
     } catch {}
@@ -75,9 +77,52 @@ export function AuthProvider({ children }) {
     toast.success('Đã đăng xuất');
   }, []);
 
+  const isAdmin = Boolean(user?.role === 'admin');
+  const isStaff = Boolean(user?.role === 'staff');
+  const isManagement = Boolean(isAdmin || isStaff);
+
+  const hasPermission = useCallback(
+    (perm) => {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
+      if (user.role === 'staff') {
+        const perms = Array.isArray(user.permissions) ? user.permissions : [];
+        return perms.includes(perm);
+      }
+      return false;
+    },
+    [user]
+  );
+
+  const hasAnyPermission = useCallback(
+    (...perms) => {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
+      if (user.role === 'staff') {
+        const userPerms = Array.isArray(user.permissions) ? user.permissions : [];
+        return perms.some((p) => userPerms.includes(p));
+      }
+      return false;
+    },
+    [user]
+  );
+
   const value = useMemo(
-    () => ({ user, loading, isAdmin: user?.role === 'admin', login, register, loginWithGoogle, logout, setUser }),
-    [user, loading, login, register, loginWithGoogle, logout]
+    () => ({
+      user,
+      loading,
+      isAdmin,
+      isStaff,
+      isManagement,
+      hasPermission,
+      hasAnyPermission,
+      login,
+      register,
+      loginWithGoogle,
+      logout,
+      setUser,
+    }),
+    [user, loading, isAdmin, isStaff, isManagement, hasPermission, hasAnyPermission, login, register, loginWithGoogle, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

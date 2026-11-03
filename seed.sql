@@ -37,7 +37,12 @@ ALTER TABLE payments AUTO_INCREMENT = 1;
 INSERT INTO users (id, full_name, email, password_hash, phone, role) VALUES
 (1, 'Quản Trị Viên', 'admin@cinema.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0900000001', 'admin'),
 (2, 'Nguyễn Văn An', 'an@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0900000002', 'user'),
-(3, 'Trần Thị Bình', 'binh@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0900000003', 'user');
+(3, 'Trần Thị Bình', 'binh@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0900000003', 'user'),
+(4, 'Nhân Viên Vận Hành', 'staff@cinebooking.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0911000001', 'staff'),
+(5, 'Nhân Viên Quầy Vé', 've@cinebooking.vn', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '0911000002', 'staff');
+
+UPDATE users SET staff_title = 'Nhân viên Vận hành Rạp', permissions = '["dashboard:view","movies:manage","genres:manage","cinemas:manage","rooms:manage","showtimes:manage","combos:manage","promotions:manage","bookings:manage","tickets:checkin"]' WHERE id = 4;
+UPDATE users SET staff_title = 'Nhân viên Quầy vé & Soát vé', permissions = '["bookings:manage","tickets:checkin"]' WHERE id = 5;
 
 -- GENRES
 INSERT INTO genres (id, name, slug) VALUES

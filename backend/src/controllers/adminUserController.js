@@ -10,3 +10,32 @@ exports.setStatus = asyncHandler(async (req, res) => {
   const user = await adminUserService.setStatus(req.user, req.params.id, req.body.is_active);
   sendSuccess(res, { user }, user.is_active ? 'Đã mở khóa tài khoản' : 'Đã khóa tài khoản');
 });
+
+exports.setRole = asyncHandler(async (req, res) => {
+  const { role, staff_title, permissions } = req.body;
+  const user = await adminUserService.updateRole(req.user, req.params.id, {
+    role,
+    staff_title,
+    permissions,
+  });
+  sendSuccess(res, { user }, 'Cập nhật vai trò và phân quyền thành công');
+});
+
+exports.createStaff = asyncHandler(async (req, res) => {
+  const { full_name, email, password, phone, role, staff_title, permissions } = req.body;
+  const user = await adminUserService.createStaff(req.user, {
+    full_name,
+    email,
+    password,
+    phone,
+    role,
+    staff_title,
+    permissions,
+  });
+  sendSuccess(res, { user }, 'Tạo tài khoản nhân viên thành công', 201);
+});
+
+exports.getPermissions = asyncHandler(async (req, res) => {
+  const data = await adminUserService.getPermissions();
+  sendSuccess(res, data, 'Lấy danh mục phân quyền thành công');
+});

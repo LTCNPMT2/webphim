@@ -115,7 +115,7 @@ export default function Profile() {
       <div>
         <h1 className="text-2xl font-bold">Hồ sơ cá nhân</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Vai trò: {user.role === 'admin' ? 'Quản trị viên' : 'Thành viên'} · Tham gia từ {formatDateTime(user.created_at)}
+          Vai trò: {user.role === 'admin' ? 'Quản trị viên' : (user.role === 'staff' ? ('Nhân viên' + (user.staff_title ? ` (${user.staff_title})` : '')) : 'Thành viên')} · Tham gia từ {formatDateTime(user.created_at)}
         </p>
       </div>
       <ProfileForm />

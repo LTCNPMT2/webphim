@@ -44,3 +44,7 @@ exports.findTaken = async (conn, showtimeId, ids) => {
   );
   return rows;
 };
+
+exports.calcPrice = (basePrice, seatType, surcharge = 0) => {
+  return Number(basePrice) + Number(surcharge || 0);
+};

@@ -50,7 +50,8 @@ exports.create = async (user, { showtime_id, seat_ids, combos = [], promo_code }
       // 2. Nhả ghế của các đơn hết hạn thuộc suất này (để khách khác đặt được ngay, không đợi cron)
       await bookingModel.expirePending(conn, showtime_id);
 
-      if ((await bookingModel.countActivePendingByUser(conn, user.id)) >= MAX_PENDING) {
+      const pendingCount = await bookingModel.countActivePendingByUser(conn, user.id);
+      if (pendingCount >= MAX_PENDING) {
         throw new ApiError(429, `Bạn đang giữ ghế ở ${MAX_PENDING} đơn chưa thanh toán. Hãy thanh toán hoặc hủy bớt trước khi đặt thêm`);
       }
 
@@ -94,13 +95,16 @@ exports.create = async (user, { showtime_id, seat_ids, combos = [], promo_code }
         promotion_id: promotionId,
         subtotal,
         discount_amount: discount,
-        total_amount: subtotal - discount,
+        total_amount: Math.max(0, subtotal - discount),
       }, HOLD_MINUTES());
+
       await bookingModel.insertSeats(conn, seatRows.map((s) => [id, showtime_id, s.id, s.price]));
-      await bookingModel.insertCombos(
-        conn,
-        comboRows.map((c) => [id, c.id, comboQty.get(c.id), c.price])
-      );
+      if (comboRows.length) {
+        await bookingModel.insertCombos(
+          conn,
+          comboRows.map((c) => [id, c.id, comboQty.get(c.id), c.price])
+        );
+      }
       return id;
     });
   } catch (err) {
@@ -117,8 +121,9 @@ exports.create = async (user, { showtime_id, seat_ids, combos = [], promo_code }
 // ===================== XEM CHI TIẾT / LỊCH SỬ =====================
 exports.getDetail = async (user, id) => {
   const row = await bookingModel.findDetailRow(id, CANCEL_HOURS());
-  // Người khác không được xem đơn của mình (trả 404 để không lộ đơn có tồn tại)
-  if (!row || (row.user_id !== user.id && user.role !== 'admin')) {
+  // Cho phép chính chủ, hoặc quản trị/nhân viên
+  const isPrivileged = user && (user.role === 'admin' || user.role === 'staff');
+  if (!row || (row.user_id !== user.id && !isPrivileged)) {
     throw new ApiError(404, 'Không tìm thấy đơn đặt vé');
   }
 
@@ -138,6 +143,9 @@ exports.getDetail = async (user, id) => {
     seconds_left: row.seconds_left === null ? null : Number(row.seconds_left),
     created_at: row.created_at,
     cancelled_at: row.cancelled_at,
+    checked_in_at: row.checked_in_at,
+    checked_in_by: row.checked_in_by,
+    checked_in_by_name: row.checked_in_by_name,
     subtotal: row.subtotal,
     discount_amount: row.discount_amount,
     total_amount: row.total_amount,
@@ -151,8 +159,11 @@ exports.getDetail = async (user, id) => {
     },
     showtime: { id: row.showtime_id, start_time: row.start_time, end_time: row.end_time },
     movie: {
-      id: row.movie_id, title: row.movie_title, poster_url: row.poster_url,
-      duration_minutes: row.duration_minutes, age_rating: row.age_rating,
+      id: row.movie_id,
+      title: row.movie_title,
+      poster_url: row.poster_url,
+      duration_minutes: row.duration_minutes,
+      age_rating: row.age_rating,
     },
     cinema: { name: row.cinema_name, address: row.cinema_address },
     room: { name: row.room_name, room_type: row.room_type },
@@ -169,7 +180,7 @@ exports.listMine = async (user, query) => {
 };
 
 // ===================== HỦY VÉ =====================
-// asAdmin = true: admin hủy đơn của người khác và không bị giới hạn thời gian hủy
+// asAdmin = true: admin/staff hủy đơn của người khác và không bị giới hạn thời gian hủy
 exports.cancel = async (user, id, { asAdmin = false } = {}) => {
   let expired = false;
 
@@ -202,4 +213,62 @@ exports.cancel = async (user, id, { asAdmin = false } = {}) => {
 
   if (expired) throw new ApiError(409, 'Đơn đặt vé đã hết hạn giữ ghế');
   return exports.getDetail(user, id);
+};
+
+// ===================== SOÁT VÉ / CHECK-IN =====================
+exports.verifyTicket = async (user, code) => {
+  const row = await bookingModel.findDetailByCode(code, CANCEL_HOURS());
+  if (!row) throw new ApiError(404, 'Không tìm thấy vé với mã này');
+
+  const [seats, combos] = await Promise.all([
+    bookingModel.getSeats(row.id),
+    bookingModel.getCombos(row.id),
+  ]);
+
+  return {
+    id: row.id,
+    booking_code: row.booking_code,
+    status: row.status,
+    total_amount: row.total_amount,
+    checked_in_at: row.checked_in_at,
+    checked_in_by: row.checked_in_by,
+    checked_in_by_name: row.checked_in_by_name,
+    created_at: row.created_at,
+    user: {
+      id: row.user_id,
+      full_name: row.user_name,
+      email: row.user_email,
+      phone: row.user_phone,
+    },
+    showtime: { id: row.showtime_id, start_time: row.start_time, end_time: row.end_time },
+    movie: {
+      id: row.movie_id,
+      title: row.movie_title,
+      poster_url: row.poster_url,
+      duration_minutes: row.duration_minutes,
+      age_rating: row.age_rating,
+    },
+    cinema: { name: row.cinema_name, address: row.cinema_address },
+    room: { name: row.room_name, room_type: row.room_type },
+    seats: seats.map((s) => ({ label: `${s.row_label}${s.seat_number}`, seat_type: s.seat_type, price: s.price })),
+    combos,
+  };
+};
+
+exports.checkInTicket = async (staffUser, code) => {
+  const ticket = await exports.verifyTicket(staffUser, code);
+  if (ticket.status !== 'paid') {
+    throw new ApiError(400, `Vé đang ở trạng thái "${ticket.status}", không thể xác nhận vào rạp`);
+  }
+  if (ticket.checked_in_at) {
+    throw new ApiError(
+      400,
+      `Vé này đã được soát vào lúc ${new Date(ticket.checked_in_at).toLocaleString('vi-VN')} (Bởi: ${
+        ticket.checked_in_by_name || 'Nhân viên'
+      })`
+    );
+  }
+
+  await bookingModel.checkIn(ticket.id, staffUser.id);
+  return exports.verifyTicket(staffUser, code);
 };

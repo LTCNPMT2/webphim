@@ -30,7 +30,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// Phân quyền: dùng SAU verifyToken. Ví dụ: router.use(verifyToken, requireRole('admin'))
+// Phân quyền theo vai trò (roles)
 const requireRole = (...roles) => (req, res, next) => {
   if (!req.user) return next(new ApiError(401, 'Bạn chưa đăng nhập'));
   if (!roles.includes(req.user.role)) {
@@ -39,4 +39,38 @@ const requireRole = (...roles) => (req, res, next) => {
   next();
 };
 
-module.exports = { verifyToken, requireRole };
+// Phân quyền chi tiết (RBAC)
+// - Admin có toàn bộ quyền (superadmin).
+// - Staff cần sở hữu quyền cụ thể trong permissions.
+const requirePermission = (permission) => (req, res, next) => {
+  if (!req.user) return next(new ApiError(401, 'Bạn chưa đăng nhập'));
+  if (req.user.role === 'admin') return next();
+
+  if (req.user.role === 'staff') {
+    const permissions = Array.isArray(req.user.permissions) ? req.user.permissions : [];
+    if (permissions.includes(permission)) {
+      return next();
+    }
+    return next(new ApiError(403, `Bạn không có quyền thực hiện thao tác này (cần quyền: ${permission})`));
+  }
+
+  return next(new ApiError(403, 'Bạn không có quyền truy cập khu vực này'));
+};
+
+const requireAnyPermission = (...permissions) => (req, res, next) => {
+  if (!req.user) return next(new ApiError(401, 'Bạn chưa đăng nhập'));
+  if (req.user.role === 'admin') return next();
+
+  if (req.user.role === 'staff') {
+    const userPerms = Array.isArray(req.user.permissions) ? req.user.permissions : [];
+    const hasAny = permissions.some((p) => userPerms.includes(p));
+    if (hasAny) return next();
+    return next(
+      new ApiError(403, `Bạn không có quyền thực hiện thao tác này (cần một trong các quyền: ${permissions.join(', ')})`)
+    );
+  }
+
+  return next(new ApiError(403, 'Bạn không có quyền truy cập khu vực này'));
+};
+
+module.exports = { verifyToken, requireRole, requirePermission, requireAnyPermission };

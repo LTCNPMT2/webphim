@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "reset:demo-passwords": "node scripts/resetDemoPasswords.js"
+    "reset:demo-passwords": "node scripts/resetDemoPasswords.js",
+    "audit": "node scripts/audit_system.js"
   },
   "license": "ISC",
   "dependencies": {

@@ -7,6 +7,8 @@ exports.listActive = async () => {
   return rows;
 };
 
+exports.findByIds = async (conn, ids) => exports.findActiveByIds(conn, ids);
+
 exports.findActiveByIds = async (conn, ids) => {
   if (!ids.length) return [];
   const [rows] = await conn.execute(

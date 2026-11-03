@@ -5,17 +5,40 @@ const { escapeLike } = require('../utils/sql');
 
 // Các cột an toàn để trả về client (KHÔNG có password_hash)
 const PUBLIC_COLUMNS =
-  'id, full_name, email, phone, avatar_url, role, is_active, created_at';
+  'id, full_name, email, phone, avatar_url, role, staff_title, permissions, is_active, created_at';
+
+const parsePermissions = (perms) => {
+  if (Array.isArray(perms)) return perms;
+  if (!perms) return [];
+  try {
+    const parsed = typeof perms === 'string' ? JSON.parse(perms) : perms;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const formatUser = (user) => {
+  if (!user) return null;
+  return {
+    ...user,
+    permissions: parsePermissions(user.permissions),
+  };
+};
 
 exports.findById = async (id) => {
   const [rows] = await pool.execute(`SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = ?`, [id]);
-  return rows[0] || null;
+  return formatUser(rows[0]) || null;
 };
 
 // Dùng khi đăng nhập: lấy cả password_hash để so sánh
 exports.findByEmailWithPassword = async (email) => {
   const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
-  return rows[0] || null;
+  if (!rows[0]) return null;
+  return {
+    ...rows[0],
+    permissions: parsePermissions(rows[0].permissions),
+  };
 };
 
 exports.existsByEmail = async (email) => {
@@ -36,6 +59,23 @@ exports.create = async ({ full_name, email, password_hash, phone, avatar_url }) 
   return result.insertId;
 };
 
+exports.createStaff = async ({
+  full_name,
+  email,
+  password_hash,
+  phone,
+  role = 'staff',
+  staff_title,
+  permissions,
+}) => {
+  const permsJson = permissions ? JSON.stringify(permissions) : JSON.stringify([]);
+  const [result] = await pool.execute(
+    'INSERT INTO users (full_name, email, password_hash, phone, role, staff_title, permissions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [full_name, email, password_hash, phone ?? null, role, staff_title ?? null, permsJson]
+  );
+  return result.insertId;
+};
+
 exports.updateProfile = async (id, { full_name, phone, avatar_url }) => {
   await pool.execute(
     'UPDATE users SET full_name = ?, phone = ?, avatar_url = ? WHERE id = ?',
@@ -45,6 +85,14 @@ exports.updateProfile = async (id, { full_name, phone, avatar_url }) => {
 
 exports.updatePassword = async (id, password_hash) => {
   await pool.execute('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash, id]);
+};
+
+exports.updateRoleAndPermissions = async (id, { role, staff_title, permissions }) => {
+  const permsJson = permissions ? JSON.stringify(permissions) : JSON.stringify([]);
+  await pool.execute(
+    'UPDATE users SET role = ?, staff_title = ?, permissions = ? WHERE id = ?',
+    [role, staff_title ?? null, permsJson, id]
+  );
 };
 
 // ---------- Dành cho trang quản trị ----------
@@ -57,20 +105,29 @@ exports.adminList = async ({ search, role, status }, { limit, offset }) => {
     const like = `%${escapeLike(String(search).trim())}%`;
     params.push(like, like, like);
   }
-  if (role) { conds.push('u.role = ?'); params.push(String(role)); }
+  if (role) {
+    conds.push('u.role = ?');
+    params.push(String(role));
+  }
   if (status === 'active') conds.push('u.is_active = 1');
   if (status === 'locked') conds.push('u.is_active = 0');
   const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
 
   const [rows] = await pool.execute(
-    `SELECT u.id, u.full_name, u.email, u.phone, u.role, u.is_active, u.created_at,
+    `SELECT u.id, u.full_name, u.email, u.phone, u.role, u.staff_title, u.permissions, u.is_active, u.created_at,
             (SELECT COUNT(*) FROM bookings b WHERE b.user_id = u.id AND b.status = 'paid') AS paid_bookings,
             (SELECT COALESCE(SUM(b.total_amount), 0) FROM bookings b WHERE b.user_id = u.id AND b.status = 'paid') AS total_spent
      FROM users u ${where} ORDER BY u.created_at DESC, u.id DESC LIMIT ${limit} OFFSET ${offset}`,
     params
   );
+
+  const formattedRows = rows.map((r) => ({
+    ...formatUser(r),
+    total_spent: Number(r.total_spent),
+  }));
+
   const [[{ total }]] = await pool.execute(`SELECT COUNT(*) AS total FROM users u ${where}`, params);
-  return { rows, total };
+  return { rows: formattedRows, total };
 };
 
 exports.setActive = async (id, active) => {

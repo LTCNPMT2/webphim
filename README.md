@@ -1,6 +1,6 @@
 # CineBooking - Website Bán Vé Xem Phim Trực Tuyến 🎬🍿
 
-Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ chọn rạp, chọn suất chiếu, chọn ghế trực quan theo thời gian thực, đặt combo bắp nước, thanh toán tự động qua SePay (VietQR), đăng nhập Google OAuth, và gửi email thông báo đặt vé thành công kèm mã QR soát vé.
+Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ chọn rạp, chọn suất chiếu, chọn ghế trực quan theo thời gian thực, đặt combo bắp nước, thanh toán tự động qua SePay (VietQR), đăng nhập Google OAuth, phân quyền nhân viên linh hoạt (RBAC), soát vé tại quầy rạp và gửi email thông báo đặt vé thành công kèm mã QR soát vé.
 
 ---
 
@@ -16,19 +16,25 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 - **Gửi Email Xác Nhận & QR Code Vé**: Tự động gửi email vé điện tử đính kèm mã QR soát vé chữ ký HMAC và email thông báo đăng nhập.
 - **Quản lý vé**: Xem lịch sử đặt vé, chi tiết mã vé, trạng thái thanh toán.
 
-### Phía Quản Trị (Admin)
+### Phía Quản Trị & Nhân Viên (Admin & Staff RBAC)
+- **Hệ thống phân quyền nhân viên đồng bộ (RBAC)**:
+  - Phân quyền theo chức vụ và tác vụ chi tiết: Xem báo cáo doanh thu, Quản lý phim, Quản lý thể loại, Quản lý cụm rạp & phòng chiếu, Quản lý lịch & suất chiếu, Quản lý combo bắp nước, Quản lý mã giảm giá, Quản lý đơn vé, Soát vé tại quầy, Quản lý tài khoản & phân quyền.
+  - Hỗ trợ chọn nhanh theo nhóm quyền mẫu (Quầy vé & Soát vé, Lịch chiếu & Phim, Dịch vụ & Marketing, Giám sát Vận hành) hoặc tùy chỉnh từng checkbox quyền riêng lẻ.
+  - Giao diện Sidebar, Navbar và đường dẫn tự động ẩn/hiện đồng bộ chính xác theo từng quyền của nhân viên đang đăng nhập.
+- **Soát vé & Check-in tại quầy rạp**:
+  - Tra cứu mã đặt vé (hoặc quét mã QR), kiểm tra thời gian chiếu, phòng chiếu, ghế ngồi và trạng thái thanh toán.
+  - Xác nhận khách vào phòng chiếu (Check-in), chống soát trùng vé và lưu lại lịch sử nhân viên soát vé.
 - **Dashboard doanh thu**: Thống kê doanh thu theo ngày, tháng, tổng doanh thu, tỷ lệ lấp đầy rạp, biểu đồ doanh thu theo phim.
-- **Quản lý phim**: Thêm/sửa/xóa tác phẩm điện ảnh, upload poster/banner, quản lý diễn viên, hình ảnh, câu hỏi thường gặp.
 - **Quản lý rạp & phòng chiếu**: Cấu hình rạp chiếu, loại phòng (2D, 3D, IMAX) và sơ đồ ghế.
 - **Quản lý suất chiếu**: Lên lịch chiếu theo phòng, cấu hình giá vé cơ bản.
-- **Quản lý đơn hàng & thanh toán**: Tra cứu đơn hàng, soát vé mã QR.
+- **Quản lý đơn hàng & thanh toán**: Tra cứu đơn hàng, hủy vé, hoàn tiền.
 
 ---
 
 ## 🛠️ Công Nghệ Sử Dụng
 
 - **Frontend**: React 18, Vite, Tailwind CSS, Lucide React / Heroicons, Axios, React Router v6.
-- **Backend**: Node.js, Express.js, MySQL (mysql2 pool with prepared statements), JWT Authentication, Nodemailer.
+- **Backend**: Node.js, Express.js, MySQL (mysql2 pool with prepared statements), JWT Authentication (RBAC Middleware), Nodemailer.
 - **Database**: MySQL / MariaDB (XAMPP).
 - **Cổng thanh toán**: SePay (VietQR chuyển khoản ngân hàng tự động).
 - **Gửi Email**: Gmail SMTP / Nodemailer.
@@ -43,11 +49,14 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 
 ### 2. Nạp Cơ Sở Dữ Liệu
 1. Mở phpMyAdmin: `http://localhost/phpmyadmin/`.
-2. Import file database đầy đủ tại:
+2. Import file database tại:
    ```
    database/movie_sales.sql
    ```
-   *(File đã tích hợp sẵn lệnh tạo database `movie_booking` và 16 bảng dữ liệu hoàn chỉnh).*
+   Hoặc chạy script cập nhật phân quyền nhân viên nếu đã có database cũ:
+   ```
+   database/add_staff_rbac.sql
+   ```
 
 ### 3. Cài Đặt Backend
 1. Truy cập thư mục backend và cài đặt thư viện:
@@ -89,10 +98,15 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 
 ## 👥 Tài Khoản Mẫu Để Trải Nghiệm
 
-| Vai trò | Email | Mật khẩu |
-| :--- | :--- | :--- |
-| **Admin** | `admin@cinebooking.vn` | `Admin@123456` |
-| **Khách hàng** | `user1@gmail.com` | `User@123456` |
+| Vai trò / Chức vụ | Email | Mật khẩu | Quyền hạn nổi bật |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (Super Admin)** | `admin@cinema.vn` | `password` | Toàn quyền điều hành hệ thống |
+| **Quản trị viên (CineBooking)** | `admin@cinebooking.vn` | `Admin@123456` | Toàn quyền điều hành hệ thống |
+| **Nhân viên Quầy vé & Soát vé** | `ve@cinebooking.vn` | `Staff@123456` | Quản lý đơn vé, Soát vé & Check-in tại quầy |
+| **Nhân viên Lịch chiếu & Phim** | `lichchieu@cinebooking.vn` | `Staff@123456` | Quản lý phim, thể loại, lịch & phòng chiếu |
+| **Nhân viên Vận hành Rạp** | `staff@cinebooking.vn` | `Staff@123456` | Báo cáo, phim, suất chiếu, bắp nước, soát vé |
+| **Khách hàng** | `an@example.com` | `password` | Đặt vé, xem phim, quản lý hồ sơ cá nhân |
+| **Khách hàng (Demo)** | `user1@gmail.com` | `User@123456` | Đặt vé, xem phim, quản lý hồ sơ cá nhân |
 
 ---
 
@@ -101,22 +115,24 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 ```
 ├── backend/
 │   ├── src/
-│   │   ├── config/          # Cấu hình DB pool, mailer, env
-│   │   ├── controllers/     # Controller API
+│   │   ├── config/          # Cấu hình DB pool, permissions RBAC, mailer, env
+│   │   ├── controllers/     # Controller API (auth, admin, checkin, booking...)
+│   │   ├── middlewares/     # Middleware xác thực JWT, phân quyền requireRole, requirePermission
 │   │   ├── models/          # Model thao tác DB MySQL
 │   │   ├── routes/          # Express routes (auth, catalog, booking, admin...)
-│   │   ├── services/        # Business logic (email, sepay webhook, booking...)
+│   │   ├── services/        # Business logic (email, sepay webhook, booking, rbac...)
 │   │   └── validators/      # Validate dữ liệu đầu vào
 │   ├── uploads/             # Thư mục lưu ảnh upload
 │   └── server.js            # Entry point backend
 ├── frontend/
 │   ├── src/
-│   │   ├── components/      # UI components (Header, Footer, MovieCard, Modal...)
-│   │   ├── pages/           # Pages (Home, MovieDetail, Booking, Admin...)
-│   │   ├── services/        # Gọi API backend
+│   │   ├── components/      # UI components (Header, AdminLayout, Modal...)
+│   │   ├── pages/           # Pages (Home, MovieDetail, Booking, AdminTicketCheckin, AdminUsers...)
+│   │   ├── context/         # AuthContext với RBAC helpers (hasPermission, isStaff, isAdmin)
+│   │   ├── services/        # Gọi API backend (adminService, catalogService, authService...)
 │   │   └── utils/           # Helper format, constants
 │   └── index.html
 └── database/
+    ├── add_staff_rbac.sql   # Script nâng cấp phân quyền nhân viên
     └── movie_sales.sql      # Database dump hoàn chỉnh
 ```
-
