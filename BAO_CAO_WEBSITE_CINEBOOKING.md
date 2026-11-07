@@ -774,7 +774,7 @@ Nhằm nâng tầm giao diện từ một website đồ án cơ bản trở thà
 3. Tạo mới cơ sở dữ liệu có tên: `movie_booking` với Collation là `utf8mb4_unicode_ci`.
 4. Chọn thẻ **Import** và chọn file:
    ```text
-   database/movie_sales.sql  (hoặc seed.sql)
+   database/movie_booking.sql
    ```
 5. Nhấn **Import** để hoàn tất nạp cấu trúc 16 bảng và dữ liệu mẫu.
 

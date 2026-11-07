@@ -52,7 +52,7 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 2. Tạo database tên `movie_booking` (nếu chưa có).
 3. Import file database duy nhất tại:
    ```
-   database/movie_sales.sql
+   database/movie_booking.sql
    ```
    *(File đã tích hợp toàn bộ cấu trúc bảng, dữ liệu mẫu, phân quyền nhân viên RBAC và các suất chiếu).*
 
@@ -131,5 +131,5 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 │   │   └── utils/           # Helper format, constants
 │   └── index.html
 └── database/
-    └── movie_sales.sql      # Database dump hoàn chỉnh (file duy nhất)
+    └── movie_booking.sql    # Database dump hoàn chỉnh (file duy nhất)
 ```
