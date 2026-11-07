@@ -49,14 +49,12 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 
 ### 2. Nạp Cơ Sở Dữ Liệu
 1. Mở phpMyAdmin: `http://localhost/phpmyadmin/`.
-2. Import file database tại:
+2. Tạo database tên `movie_booking` (nếu chưa có).
+3. Import file database duy nhất tại:
    ```
    database/movie_sales.sql
    ```
-   Hoặc chạy script cập nhật phân quyền nhân viên nếu đã có database cũ:
-   ```
-   database/add_staff_rbac.sql
-   ```
+   *(File đã tích hợp toàn bộ cấu trúc bảng, dữ liệu mẫu, phân quyền nhân viên RBAC và các suất chiếu).*
 
 ### 3. Cài Đặt Backend
 1. Truy cập thư mục backend và cài đặt thư viện:
@@ -133,6 +131,5 @@ Dự án website đặt vé xem phim trực tuyến hiện đại, hỗ trợ ch
 │   │   └── utils/           # Helper format, constants
 │   └── index.html
 └── database/
-    ├── add_staff_rbac.sql   # Script nâng cấp phân quyền nhân viên
-    └── movie_sales.sql      # Database dump hoàn chỉnh
+    └── movie_sales.sql      # Database dump hoàn chỉnh (file duy nhất)
 ```
