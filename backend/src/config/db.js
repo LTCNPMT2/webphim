@@ -14,6 +14,7 @@ const pool = mysql.createPool({
   charset: 'utf8mb4',
   timezone: '+07:00', // giờ Việt Nam
   dateStrings: ['DATE'], // cột DATE (vd release_date) trả về 'YYYY-MM-DD', tránh lệch ngày do múi giờ
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
 // Đặt múi giờ cho MỖI kết nối MySQL: NOW(), CURDATE() sẽ cùng giờ Việt Nam với phía Node
