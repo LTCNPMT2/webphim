@@ -190,7 +190,7 @@ CREATE TABLE `cinemas` (
 
 LOCK TABLES `cinemas` WRITE;
 /*!40000 ALTER TABLE `cinemas` DISABLE KEYS */;
-INSERT INTO `cinemas` VALUES (1,'Cinema Sài Gòn Center','65 Lê Lợi, Quận 1','TP. Hồ Chí Minh','02838000001','https://placehold.co/600x400/png?text=Saigon+Center',1,'2026-10-16 04:13:22'),(2,'Cinema Hà Nội Plaza','25 Tràng Tiền, Hoàn Kiếm','Hà Nội','02438000002','https://placehold.co/600x400/png?text=Hanoi+Plaza',1,'2026-10-16 04:13:22');
+INSERT INTO `cinemas` VALUES (1,'Cinema Sài Gòn Center','613 Âu Cơ, Tân Phú, Hồ Chí Minh','TP. Hồ Chí Minh','02838000001','https://placehold.co/600x400/png?text=Saigon+Center',1,'2026-10-16 04:13:22'),(2,'Cinema Hà Nội Plaza','87 Láng Hạ, Ô Chợ Dừa, Hà Nội','Hà Nội','02438000002','https://placehold.co/600x400/png?text=Hanoi+Plaza',1,'2026-10-16 04:13:22');
 /*!40000 ALTER TABLE `cinemas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -602,5 +602,25 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- =====================================================================
+-- BỔ SUNG PHÂN QUYỀN NHÂN VIÊN (RBAC) & SOÁT VÉ CHO DEPLOY PRODUCTION
+-- =====================================================================
+ALTER TABLE `users` MODIFY COLUMN `role` ENUM('user','staff','admin') NOT NULL DEFAULT 'user';
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `staff_title` VARCHAR(100) NULL DEFAULT NULL AFTER `role`;
+ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `permissions` TEXT NULL DEFAULT NULL AFTER `staff_title`;
+
+ALTER TABLE `bookings` ADD COLUMN IF NOT EXISTS `checked_in_at` DATETIME NULL DEFAULT NULL AFTER `cancelled_at`;
+ALTER TABLE `bookings` ADD COLUMN IF NOT EXISTS `checked_in_by` INT UNSIGNED NULL DEFAULT NULL AFTER `checked_in_at`;
+
+INSERT INTO `users` (`full_name`, `email`, `password_hash`, `phone`, `role`, `staff_title`, `permissions`)
+VALUES 
+('Nhân Viên Tổng Hợp', 'staff@cinebooking.vn', '$2a$10$SCQqClqt34uMguEd/IiPUukil35VqGL9EizkYXmfm7DZq2iHVbs3K', '0911000001', 'staff', 'Nhân viên Vận hành Rạp', '["dashboard:view","movies:manage","genres:manage","cinemas:manage","rooms:manage","showtimes:manage","combos:manage","promotions:manage","bookings:manage","tickets:checkin"]'),
+('Nhân Viên Quầy Vé', 've@cinebooking.vn', '$2a$10$SCQqClqt34uMguEd/IiPUukil35VqGL9EizkYXmfm7DZq2iHVbs3K', '0911000002', 'staff', 'Nhân viên Quầy vé & Soát vé', '["bookings:manage","tickets:checkin"]'),
+('Nhân Viên Lịch Chiếu', 'lichchieu@cinebooking.vn', '$2a$10$SCQqClqt34uMguEd/IiPUukil35VqGL9EizkYXmfm7DZq2iHVbs3K', '0911000003', 'staff', 'Nhân viên Lịch chiếu & Phim', '["movies:manage","genres:manage","showtimes:manage","rooms:manage"]')
+ON DUPLICATE KEY UPDATE 
+role = VALUES(role),
+staff_title = VALUES(staff_title),
+permissions = VALUES(permissions);
 
 -- Dump completed on 2026-10-29 14:27:17

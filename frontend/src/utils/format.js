@@ -9,7 +9,7 @@ export const formatDateTime = (iso) =>
       })
     : '';
 
-const ASSET_URL = import.meta.env.VITE_ASSET_URL || 'http://localhost:5000';
+const ASSET_URL = import.meta.env.VITE_ASSET_URL !== undefined ? import.meta.env.VITE_ASSET_URL : '';
 
 // Ảnh poster: link ngoài (http...) giữ nguyên, ảnh upload (/uploads/...) thêm địa chỉ backend
 export const assetUrl = (path) => {

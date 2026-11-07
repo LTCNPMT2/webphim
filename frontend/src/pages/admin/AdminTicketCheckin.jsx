@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { verifyTicket, checkInTicket } from '../../services/adminService.js';
 import { getErrorMessage } from '../../services/api.js';
-import { formatDateTime, formatPrice } from '../../utils/format.js';
+import { formatDateTime, formatPrice, assetUrl } from '../../utils/format.js';
 import PageHeader from '../../components/admin/PageHeader.jsx';
 import Badge from '../../components/admin/Badge.jsx';
 
@@ -108,9 +108,13 @@ export default function AdminTicketCheckin() {
               <div className="aspect-2/3 rounded-xl overflow-hidden bg-slate-900 border border-slate-800 shadow-md">
                 {ticket.movie?.poster_url ? (
                   <img
-                    src={ticket.movie.poster_url}
-                    alt={ticket.movie.title}
+                    src={assetUrl(ticket.movie.poster_url)}
+                    alt={ticket.movie.title || 'Poster phim'}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/300x450/1e293b/white?text=' + encodeURIComponent(ticket.movie?.title || 'Phim');
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-600">No Image</div>

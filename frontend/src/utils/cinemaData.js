@@ -22,7 +22,7 @@ export const CINEMAS = [
   {
     id: 1,
     name: 'Cinema Sài Gòn Center',
-    address: '613 Âu Cơ, Tân Phú, Hồ Chí Minh, Việt Nam',
+    address: '613 Âu Cơ, Tân Phú, Hồ Chí Minh',
     city: 'TP. Hồ Chí Minh',
     cityKey: 'hcm',
     phone: '02838000001',
@@ -31,7 +31,7 @@ export const CINEMAS = [
   {
     id: 2,
     name: 'Cinema Hà Nội Plaza',
-    address: '87 Láng Hạ, Ô Chợ Dừa, Hà Nội, Việt Nam',
+    address: '87 Láng Hạ, Ô Chợ Dừa, Hà Nội',
     city: 'Hà Nội',
     cityKey: 'hn',
     phone: '02438000002',

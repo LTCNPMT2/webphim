@@ -430,7 +430,7 @@ export default function MoMoBookingModal({
         }),
         cinema: {
           name: cinema?.name || 'Cine Sài Gòn Center',
-          address: cinema?.address || '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+          address: cinema?.address || '613 Âu Cơ, Tân Phú, Hồ Chí Minh',
         },
         movie: {
           title: movie?.title || 'Trại Buôn Người',
@@ -937,129 +937,37 @@ export default function MoMoBookingModal({
       {/* BƯỚC 3: QUÉT MÃ QR BẰNG MOMO (Y CHANG ẢNH SỐ 3) */}
       {/* ============================================================== */}
       {step === 3 && (
-        <div className="relative w-full max-w-3xl max-h-[96vh] my-auto overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in grid grid-cols-1 md:grid-cols-12">
+        <div className="relative w-full max-w-3xl max-h-[92vh] md:max-h-[96vh] my-auto overflow-y-auto md:overflow-hidden rounded-2xl bg-white shadow-2xl animate-fade-in grid grid-cols-1 md:grid-cols-12">
           
-          {/* CỘT TRÁI: THÔNG TIN CHI TIẾT VÉ ĐÃ CHỌN (md:col-span-6) */}
-          <div className="md:col-span-6 p-5 sm:p-7 flex flex-col justify-between space-y-5 bg-white text-slate-800 overflow-y-auto max-h-[96vh]">
-            <div>
-              {/* Badge độ tuổi + Tên phim */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="rounded bg-rose-600 px-2 py-0.5 text-xs font-black text-white">
-                  {movie?.age_rating || 'C18'}
-                </span>
-                <h3 className="text-lg font-black text-slate-900">
-                  {movie?.title || 'Trại Buôn Người'}
-                </h3>
-              </div>
-
-              <div className="border-t border-dashed border-slate-200 my-3" />
-
-              {/* Thông tin suất chiếu */}
-              <div className="space-y-3 text-xs">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400">THỜI GIAN</span>
-                    <p className="font-bold text-slate-800 text-sm mt-0.5">
-                      {showtime?.startTimeStr || '13:40'} ~ {showtime?.endTimeStr || '15:55'}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400">NGÀY CHIẾU</span>
-                    <p className="font-bold text-slate-800 text-sm mt-0.5">
-                      {new Date().toLocaleDateString('vi-VN')}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">RẠP</span>
-                  <p className="font-bold text-slate-800 text-sm mt-0.5">
-                    {cinema?.name || 'Cine Sài Gòn Center'}
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
-                    {cinema?.address || '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400">PHÒNG CHIẾU</span>
-                    <p className="font-bold text-slate-800 mt-0.5">{showtime?.roomName || 'Cinema 8'}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400">ĐỊNH DẠNG</span>
-                    <p className="font-bold text-slate-800 mt-0.5">{showtime?.roomType || movie?.room_type || '2D Chuẩn'}</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-100 pt-2 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400">GHẾ</span>
-                    <p className="font-bold text-slate-800 text-sm">
-                      {selectedSeats.map((s) => s.id).join(', ')}
-                    </p>
-                  </div>
-                  <span className="font-bold text-slate-900">{formatPrice(seatSubtotal)}</span>
-                </div>
-
-                {comboSubtotal > 0 && (
-                  <div className="flex items-center justify-between text-xs pt-1">
-                    <span className="text-slate-500">Bắp nước ({Object.values(selectedCombos).reduce((a, b) => a + b, 0)} món)</span>
-                    <span className="font-bold text-slate-900">{formatPrice(comboSubtotal)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Ảnh avatar/poster của phim lấp đầy khoảng trống (kích thước lớn rõ nét) */}
-            <div className="my-auto py-2 flex flex-col items-center justify-center">
-              <div className="relative h-52 w-36 sm:h-64 sm:w-44 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 bg-slate-100 flex items-center justify-center">
-                {movie?.poster_url || movie?.banner_url ? (
-                  <img
-                    src={assetUrl(movie?.poster_url || movie?.banner_url)}
-                    alt={movie?.title || 'Poster phim'}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-tr from-brand-600 to-pink-500 flex flex-col items-center justify-center text-white text-xs font-bold p-2 text-center">
-                    <span className="text-4xl mb-1">🎬</span>
-                    <span className="line-clamp-2">{movie?.title || 'CineBooking'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 pt-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-slate-700">Tạm tính:</span>
-                <span className="text-xl font-black text-[#d82d8b]">{formatPrice(totalAmount)}</span>
-              </div>
-              <p className="text-[11px] text-slate-400 italic">
-                Ưu đãi (nếu có) sẽ được áp dụng ở bước thanh toán.
-              </p>
-            </div>
-          </div>
-
-          {/* CỘT PHẢI: QUÉT MÃ QR BẰNG NGÂN HÀNG (SEPAY VIETQR) (md:col-span-6) */}
-          <div className="md:col-span-6 bg-[#d82d8b] p-6 sm:p-7 text-white flex flex-col items-center justify-between text-center relative overflow-hidden">
+          {/* CỘT QUÉT MÃ QR SEPAY VIETQR: Ưu tiên hiển thị trên mobile (order-1) để vào là thấy QR ngay, desktop ở bên phải (md:order-2) */}
+          <div className="order-1 md:order-2 md:col-span-6 bg-[#d82d8b] p-5 sm:p-7 text-white flex flex-col items-center justify-between text-center relative shrink-0">
             
             {/* Nút đóng [X] */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white font-bold transition"
+              className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white font-bold transition z-10 cursor-pointer"
+              aria-label="Đóng"
             >
               ✕
             </button>
 
             {/* Tiêu đề quét mã */}
-            <div className="pt-2">
+            <div className="pt-1 sm:pt-2">
               <h3 className="text-base sm:text-lg font-black tracking-wide">
                 Quét mã QR bằng ngân hàng để thanh toán
               </h3>
+              {/* Tóm tắt nhanh trên màn hình nhỏ */}
+              <div className="md:hidden inline-flex items-center gap-1.5 rounded-lg bg-black/20 px-2.5 py-1 text-[11px] font-semibold text-white mt-1.5 max-w-full">
+                <span className="truncate max-w-[130px]">{movie?.title}</span>
+                <span>•</span>
+                <span>Ghế {selectedSeats.map((s) => s.id).join(', ')}</span>
+                <span>•</span>
+                <span className="text-amber-300 font-bold">{formatPrice(totalAmount)}</span>
+              </div>
             </div>
 
             {/* Khung trắng chứa mã QR SePay VietQR chính thức */}
-            <div className="my-3 rounded-2xl bg-white p-3 shadow-xl max-w-[210px] flex flex-col items-center justify-center">
+            <div className="my-2.5 sm:my-3 rounded-2xl bg-white p-2.5 sm:p-3 shadow-xl max-w-[190px] sm:max-w-[210px] flex flex-col items-center justify-center">
               <img
                 src={sepayQrUrl}
                 alt="Mã QR thanh toán SePay VietQR"
@@ -1113,7 +1021,7 @@ export default function MoMoBookingModal({
             </div>
 
             {/* Hướng dẫn quét */}
-            <div className="text-xs text-pink-100 max-w-xs mt-1">
+            <div className="text-[11px] sm:text-xs text-pink-100 max-w-xs mt-1">
               <p className="flex items-center justify-center gap-1.5 font-medium">
                 <span>📱</span>
                 <span>Mở app ngân hàng quét mã VietQR để thanh toán nhanh chóng.</span>
@@ -1121,7 +1029,7 @@ export default function MoMoBookingModal({
             </div>
 
             {/* Các nút bấm kiểm tra */}
-            <div className="w-full mt-3 pt-3 border-t border-white/20">
+            <div className="w-full mt-2 sm:mt-3 pt-2.5 sm:pt-3 border-t border-white/20">
               <button
                 type="button"
                 disabled={checkingPayment || loading}
@@ -1139,6 +1047,107 @@ export default function MoMoBookingModal({
               </button>
             </div>
 
+          </div>
+
+          {/* CỘT THÔNG TIN CHI TIẾT VÉ ĐÃ CHỌN: Desktop ở bên trái (md:order-1), Mobile nằm dưới (order-2) */}
+          <div className="order-2 md:order-1 md:col-span-6 p-5 sm:p-7 flex flex-col justify-between space-y-4 sm:space-y-5 bg-white text-slate-800 md:overflow-y-auto md:max-h-[96vh]">
+            <div>
+              {/* Badge độ tuổi + Tên phim */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="rounded bg-rose-600 px-2 py-0.5 text-xs font-black text-white">
+                  {movie?.age_rating || 'C18'}
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-slate-900">
+                  {movie?.title || 'Trại Buôn Người'}
+                </h3>
+              </div>
+
+              <div className="border-t border-dashed border-slate-200 my-3" />
+
+              {/* Thông tin suất chiếu */}
+              <div className="space-y-3 text-xs">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">THỜI GIAN</span>
+                    <p className="font-bold text-slate-800 text-sm mt-0.5">
+                      {showtime?.startTimeStr || '13:40'} ~ {showtime?.endTimeStr || '15:55'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">NGÀY CHIẾU</span>
+                    <p className="font-bold text-slate-800 text-sm mt-0.5">
+                      {new Date().toLocaleDateString('vi-VN')}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">RẠP</span>
+                  <p className="font-bold text-slate-800 text-sm mt-0.5">
+                    {cinema?.name || 'Cine Sài Gòn Center'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                    {cinema?.address || '613 Âu Cơ, Tân Phú, Hồ Chí Minh'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">PHÒNG CHIẾU</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{showtime?.roomName || 'Cinema 8'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">ĐỊNH DẠNG</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{showtime?.roomType || movie?.room_type || '2D Chuẩn'}</p>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-2 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">GHẾ</span>
+                    <p className="font-bold text-slate-800 text-sm">
+                      {selectedSeats.map((s) => s.id).join(', ')}
+                    </p>
+                  </div>
+                  <span className="font-bold text-slate-900">{formatPrice(seatSubtotal)}</span>
+                </div>
+
+                {comboSubtotal > 0 && (
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <span className="text-slate-500">Bắp nước ({Object.values(selectedCombos).reduce((a, b) => a + b, 0)} món)</span>
+                    <span className="font-bold text-slate-900">{formatPrice(comboSubtotal)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Ảnh avatar/poster của phim: ẩn trên mobile để gọn gàng, hiện trên tablet/desktop */}
+            <div className="hidden sm:flex my-auto py-2 flex-col items-center justify-center">
+              <div className="relative h-44 w-32 sm:h-56 sm:w-40 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 bg-slate-100 flex items-center justify-center">
+                {movie?.poster_url || movie?.banner_url ? (
+                  <img
+                    src={assetUrl(movie?.poster_url || movie?.banner_url)}
+                    alt={movie?.title || 'Poster phim'}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-tr from-brand-600 to-pink-500 flex flex-col items-center justify-center text-white text-xs font-bold p-2 text-center">
+                    <span className="text-4xl mb-1">🎬</span>
+                    <span className="line-clamp-2">{movie?.title || 'CineBooking'}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 pt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-bold text-slate-700">Tạm tính:</span>
+                <span className="text-xl font-black text-[#d82d8b]">{formatPrice(totalAmount)}</span>
+              </div>
+              <p className="text-[11px] text-slate-400 italic">
+                Ưu đãi (nếu có) sẽ được áp dụng ở bước thanh toán.
+              </p>
+            </div>
           </div>
 
         </div>
@@ -1181,7 +1190,7 @@ export default function MoMoBookingModal({
             <div className="flex items-start gap-3 border-b border-slate-200 pb-3">
               <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-800 shadow-sm border border-slate-200">
                 {movie?.poster_url ? (
-                  <img src={movie.poster_url} alt="" className="h-full w-full object-cover" />
+                  <img src={assetUrl(movie.poster_url)} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-tr from-brand-600 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold p-1 text-center">
                     CINE
@@ -1246,7 +1255,7 @@ export default function MoMoBookingModal({
               <div className="flex justify-between pt-2">
                 <span className="text-slate-500">Địa chỉ rạp:</span>
                 <span className="text-slate-600 text-right max-w-[65%] text-[11px] leading-tight">
-                  {cinema?.address || '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh'}
+                  {cinema?.address || '613 Âu Cơ, Tân Phú, Hồ Chí Minh'}
                 </span>
               </div>
 

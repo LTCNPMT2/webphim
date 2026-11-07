@@ -68,7 +68,7 @@ export default function Home() {
           },
           cinema: {
             name: 'Cinema Sài Gòn Center',
-            address: '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+            address: '613 Âu Cơ, Tân Phú, Hồ Chí Minh',
           },
         });
       }
@@ -85,7 +85,7 @@ export default function Home() {
         },
         cinema: {
           name: 'Cinema Sài Gòn Center',
-          address: '65 Lê Lợi, Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+          address: '613 Âu Cơ, Tân Phú, Hồ Chí Minh',
         },
       });
     }
