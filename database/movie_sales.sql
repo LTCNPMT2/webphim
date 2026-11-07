@@ -606,6 +606,26 @@ UNLOCK TABLES;
 -- =====================================================================
 -- BỔ SUNG PHÂN QUYỀN NHÂN VIÊN (RBAC) & SOÁT VÉ CHO DEPLOY PRODUCTION
 -- =====================================================================
+CREATE TABLE IF NOT EXISTS `roles` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `permissions` longtext DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_roles_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `roles` (`id`, `code`, `name`, `description`, `permissions`) VALUES
+(1, 'ADMIN', 'Quản trị viên', 'Toàn quyền quản trị hệ thống, nhân sự và cài đặt', '["dashboard:view","movies:manage","genres:manage","cinemas:manage","rooms:manage","showtimes:manage","combos:manage","promotions:manage","bookings:manage","tickets:checkin","users:manage","settings:manage"]'),
+(2, 'MANAGER', 'Quản lý rạp', 'Quản lý phim, phòng chiếu, suất chiếu, combo, khuyến mãi và đơn hàng', '["dashboard:view","movies:manage","genres:manage","cinemas:manage","rooms:manage","showtimes:manage","combos:manage","promotions:manage","bookings:manage"]'),
+(3, 'TICKET_STAFF', 'Nhân viên soát vé', 'Chỉ phục vụ tra cứu thông tin suất chiếu và soát vé / check-in', '["bookings:manage","tickets:checkin"]')
+ON DUPLICATE KEY UPDATE 
+name = VALUES(name),
+description = VALUES(description),
+permissions = VALUES(permissions);
+
 ALTER TABLE `users` MODIFY COLUMN `role` ENUM('user','staff','admin') NOT NULL DEFAULT 'user';
 ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `staff_title` VARCHAR(100) NULL DEFAULT NULL AFTER `role`;
 ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `permissions` TEXT NULL DEFAULT NULL AFTER `staff_title`;
