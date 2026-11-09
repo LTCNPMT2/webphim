@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/layout/Layout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminRoute from './components/AdminRoute.jsx';
@@ -29,7 +29,8 @@ import AdminCombos from './pages/admin/AdminCombos.jsx';
 import AdminPromotions from './pages/admin/AdminPromotions.jsx';
 import AdminBookings from './pages/admin/AdminBookings.jsx';
 import AdminTicketCheckin from './pages/admin/AdminTicketCheckin.jsx';
-import AdminUsers from './pages/admin/AdminUsers.jsx';
+import AdminCustomers from './pages/admin/AdminCustomers.jsx';
+import AdminStaff from './pages/admin/AdminStaff.jsx';
 import RequirePhoneModal from './components/auth/RequirePhoneModal.jsx';
 
 // Bản đồ trang: website cho khách (Layout chung) và khu quản trị (AdminLayout riêng, dành cho Admin và Staff có phân quyền)
@@ -75,7 +76,9 @@ export default function App() {
             <Route path="promotions" element={<AdminPromotions />} />
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="checkin" element={<AdminTicketCheckin />} />
-            <Route path="users" element={<AdminUsers />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="staff" element={<AdminStaff />} />
+            <Route path="users" element={<Navigate to="/admin/customers" replace />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Route>

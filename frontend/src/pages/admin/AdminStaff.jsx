@@ -1,1072 +1,772 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useFetch } from '../../hooks/useFetch.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import {
-  getStaff,
+  getUsers,
+  setUserStatus,
+  updateUserRole,
   createStaff,
-  changeStaffRole,
-  changeStaffStatus,
-  resetStaffPassword,
-  getCinemas,
-  getRoles,
-  createRole,
+  getPermissionsList,
 } from '../../services/adminService.js';
+import { getErrorMessage } from '../../services/api.js';
+import { formatDay } from '../../utils/format.js';
 import PageHeader from '../../components/admin/PageHeader.jsx';
-import Modal from '../../components/ui/Modal.jsx';
-import Button from '../../components/ui/Button.jsx';
+import AdminTable from '../../components/admin/AdminTable.jsx';
 import ConfirmDialog from '../../components/admin/ConfirmDialog.jsx';
-import { formatDateTime } from '../../utils/format.js';
-
-// Ma trận quyền mẫu hiển thị ở chế độ chỉ xem
-const PERMISSIONS_MATRIX_DATA = [
-  { module: 'Tổng quan doanh thu / Báo cáo chi tiết', admin: 'VCUD', manager: 'V', staff: '-', concession: '-' },
-  { module: 'Phim, Thể loại, Diễn viên, Đạo diễn, Định dạng', admin: 'VCUD', manager: 'VCUD', staff: '-', concession: '-' },
-  { module: 'Cụm rạp, Phòng chiếu & Ghế', admin: 'VCUD', manager: 'VCU', staff: '-', concession: '-' },
-  { module: 'Lịch & Suất chiếu', admin: 'VCUD', manager: 'VCUD', staff: 'V', concession: 'V' },
-  { module: 'Giá vé', admin: 'VCUD', manager: 'VCU', staff: '-', concession: '-' },
-  { module: 'Combo bắp nước & Mã giảm giá', admin: 'VCUD', manager: 'VCUD', staff: '-', concession: 'VCUD' },
-  { module: 'Đơn vé đã đặt', admin: 'VCUD', manager: 'V, U (hủy/đổi)', staff: 'V (tra cứu)', concession: 'V (tra cứu)' },
-  { module: 'Thanh toán & Giao dịch', admin: 'VCUD', manager: 'V', staff: '-', concession: '-' },
-  { module: 'Soát vé / Check-in', admin: 'VCUD', manager: 'V', staff: 'V, U (soát vé)', concession: '-' },
-  { module: 'Đánh giá & Bình luận', admin: 'VCUD', manager: 'V, U (duyệt/ẩn)', staff: '-', concession: '-' },
-  { module: 'Thông báo', admin: 'VCUD', manager: 'VCU', staff: '-', concession: '-' },
-  { module: 'Khách hàng & Người dùng', admin: 'VCUD', manager: 'V', staff: '-', concession: '-' },
-  { module: 'Nhân viên & Phân quyền', admin: 'VCUD', manager: '-', staff: '-', concession: '-' },
-  { module: 'Cài đặt hệ thống', admin: 'VCUD', manager: '-', staff: '-', concession: '-' },
-];
-
-// Danh sách các module và quyền khả dụng khi tạo chức vụ mới
-const AVAILABLE_PERM_MODULES = [
-  {
-    id: 'combos',
-    label: 'Combo bắp nước & Khuyến mãi',
-    icon: '🍿',
-    actions: [
-      { key: 'combos:view', label: 'Xem combo' },
-      { key: 'combos:create', label: 'Thêm combo' },
-      { key: 'combos:update', label: 'Sửa combo' },
-      { key: 'combos:delete', label: 'Xóa combo' },
-    ],
-  },
-  {
-    id: 'bookings',
-    label: 'Đơn vé & Soát vé check-in',
-    icon: '🎟️',
-    actions: [
-      { key: 'bookings:view', label: 'Xem & tra cứu đơn vé' },
-      { key: 'bookings:update', label: 'Đổi / hủy đơn vé' },
-      { key: 'bookings:checkin', label: 'Soát vé / Check-in' },
-    ],
-  },
-  {
-    id: 'showtimes',
-    label: 'Lịch & Suất chiếu',
-    icon: '🕒',
-    actions: [
-      { key: 'showtimes:view', label: 'Xem suất chiếu' },
-      { key: 'showtimes:create', label: 'Tạo suất chiếu' },
-      { key: 'showtimes:update', label: 'Sửa suất chiếu' },
-      { key: 'showtimes:delete', label: 'Xóa suất chiếu' },
-    ],
-  },
-  {
-    id: 'movies',
-    label: 'Phim & Danh mục',
-    icon: '🎬',
-    actions: [
-      { key: 'movies:view', label: 'Xem phim' },
-      { key: 'movies:create', label: 'Thêm phim' },
-      { key: 'movies:update', label: 'Sửa phim' },
-      { key: 'movies:delete', label: 'Xóa phim' },
-    ],
-  },
-  {
-    id: 'cinemas',
-    label: 'Cụm rạp & Phòng chiếu',
-    icon: '🏛️',
-    actions: [
-      { key: 'cinemas:view', label: 'Xem rạp & phòng' },
-      { key: 'cinemas:create', label: 'Thêm rạp / phòng' },
-      { key: 'cinemas:update', label: 'Sửa rạp / ghế' },
-    ],
-  },
-  {
-    id: 'prices',
-    label: 'Bảng giá vé',
-    icon: '💰',
-    actions: [
-      { key: 'prices:view', label: 'Xem giá vé' },
-      { key: 'prices:update', label: 'Sửa giá vé' },
-    ],
-  },
-  {
-    id: 'stats',
-    label: 'Báo cáo doanh thu',
-    icon: '📊',
-    actions: [
-      { key: 'stats:view', label: 'Xem báo cáo doanh thu' },
-    ],
-  },
-  {
-    id: 'users',
-    label: 'Khách hàng & Người dùng',
-    icon: '👥',
-    actions: [
-      { key: 'users:view', label: 'Xem danh sách khách hàng' },
-    ],
-  },
-];
+import Badge, { ActiveBadge } from '../../components/admin/Badge.jsx';
+import Pagination from '../../components/ui/Pagination.jsx';
+import Modal from '../../components/ui/Modal.jsx';
 
 export default function AdminStaff() {
-  const { user: currentUser } = useAuth();
-
-  const [staffList, setStaffList] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  // Danh sách các vai trò / chức vụ từ database
-  const [roles, setRoles] = useState([
-    { id: 1, code: 'ADMIN', name: 'Quản trị viên' },
-    { id: 2, code: 'MANAGER', name: 'Quản lý rạp' },
-    { id: 3, code: 'TICKET_STAFF', name: 'Nhân viên soát vé' },
-    { id: 4, code: 'CONCESSION_STAFF', name: 'Nhân viên bắp nước' },
-  ]);
-
-  // Bộ lọc
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const { user: me } = useAuth();
+  const [searchInput, setSearchInput] = useState('');
+  const search = useDebounce(searchInput, 400);
+  const [role, setRole] = useState(''); // '' = Tất cả (staff,admin), 'staff', 'admin'
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [target, setTarget] = useState(null); // tài khoản đang chờ xác nhận khóa / mở khóa
+  const [busy, setBusy] = useState(false);
 
-  // Danh sách rạp
-  const [cinemas, setCinemas] = useState([]);
-
-  // Modals
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
-  const [showRoleModal, setShowRoleModal] = useState(null); // staff item
-  const [showResetModal, setShowResetModal] = useState(null); // staff item
-  const [statusConfirm, setStatusConfirm] = useState(null); // staff item
-
-  // Form states cho Thêm nhân viên
-  const [addForm, setAddForm] = useState({
-    full_name: '',
-    email: '',
-    password: '',
-    phone: '',
-    role_id: '4', // Mặc định là nhân viên bắp nước hoặc soát vé
-    cinema_id: '',
-  });
-
-  // Form states cho Tạo chức vụ mới
-  const [roleForm, setRoleForm] = useState({
-    name: '',
-    code: '',
-    description: '',
-  });
-  const [selectedPerms, setSelectedPerms] = useState([
-    'combos:view',
-    'combos:create',
-    'combos:update',
-    'bookings:view',
-  ]);
-  const [creatingRole, setCreatingRole] = useState(false);
-
-  const [selectedRoleId, setSelectedRoleId] = useState('3');
-  const [newPassword, setNewPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  // Tải danh sách vai trò
-  const loadRoles = async () => {
-    try {
-      const data = await getRoles();
-      if (Array.isArray(data) && data.length > 0) {
-        setRoles(data);
-      }
-    } catch (err) {
-      console.error('Không thể tải danh sách vai trò:', err);
-    }
-  };
-
-  // Tải danh sách rạp & vai trò
+  // Dữ liệu danh mục quyền hạn
+  const [permMeta, setPermMeta] = useState({ permissions: [], preset_roles: [] });
   useEffect(() => {
-    getCinemas()
-      .then(setCinemas)
-      .catch(() => {});
-    loadRoles();
+    getPermissionsList()
+      .then(setPermMeta)
+      .catch((err) => console.error('Lỗi tải danh mục quyền:', err));
   }, []);
 
-  // Tải danh sách nhân viên
-  const loadStaff = async () => {
-    setLoading(true);
-    try {
-      const res = await getStaff({
+  // Modal phân quyền nhân viên / admin
+  const [roleModalUser, setRoleModalUser] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('staff');
+  const [staffTitle, setStaffTitle] = useState('');
+  const [selectedPerms, setSelectedPerms] = useState([]);
+  const [savingRole, setSavingRole] = useState(false);
+
+  // Modal tạo nhân viên mới
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'staff',
+    staff_title: 'Nhân viên quầy vé',
+    permissions: ['bookings:manage', 'tickets:checkin'],
+  });
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => setPage(1), [search, role, status]);
+
+  // CHỈ LẤY NHÂN VIÊN VÀ QUẢN TRỊ VIÊN (staff,admin) - KHÔNG LẤY KHÁCH HÀNG
+  const queryRole = role || 'staff,admin';
+
+  const list = useFetch(
+    () =>
+      getUsers({
+        search: search || undefined,
+        role: queryRole,
+        status: status || undefined,
         page,
         limit: 10,
-        search: debouncedSearch || undefined,
-        role: roleFilter || undefined,
-        status: statusFilter || undefined,
-      });
-      setStaffList(res.items || []);
-      setTotal(res.pagination?.total || 0);
-    } catch (err) {
-      toast.error(err.message || 'Không thể tải danh sách nhân viên');
-    } finally {
-      setLoading(false);
-    }
-  };
+      }),
+    [search, queryRole, status, page]
+  );
+  const rows = list.data?.items ?? null;
 
-  useEffect(() => {
-    loadStaff();
-  }, [page, debouncedSearch, roleFilter, statusFilter]);
-
-  // Thêm nhân viên
-  const handleCreateStaff = async (e) => {
-    e.preventDefault();
-    if (addForm.password.length < 8) {
-      toast.error('Mật khẩu nhân viên phải có tối thiểu 8 ký tự');
-      return;
-    }
-    setSubmitting(true);
+  // Xử lý khóa / mở khóa tài khoản
+  const handleConfirmStatus = async () => {
+    if (!target) return;
+    setBusy(true);
     try {
-      await createStaff({
-        ...addForm,
-        role_id: Number(addForm.role_id),
-        cinema_id: addForm.cinema_id ? Number(addForm.cinema_id) : null,
-      });
-      toast.success('Tạo tài khoản nhân viên thành công');
-      setShowAddModal(false);
-      setAddForm({
-        full_name: '',
-        email: '',
-        password: '',
-        phone: '',
-        role_id: '4',
-        cinema_id: '',
-      });
-      loadStaff();
+      const updated = await setUserStatus(target.id, !target.is_active);
+      toast.success(
+        updated.is_active
+          ? `Đã mở khóa tài khoản ${target.full_name}`
+          : `Đã khóa tài khoản ${target.full_name}`
+      );
+      list.reload();
     } catch (err) {
-      toast.error(err.message || 'Lỗi khi tạo nhân viên');
+      toast.error(getErrorMessage(err));
     } finally {
-      setSubmitting(false);
+      setBusy(false);
+      setTarget(null);
     }
   };
 
-  // Tạo chức vụ mới
-  const handleCreateRole = async (e) => {
-    e.preventDefault();
-    if (!roleForm.name.trim()) {
-      toast.error('Vui lòng nhập tên chức vụ');
-      return;
-    }
-    setCreatingRole(true);
-    try {
-      const created = await createRole({
-        name: roleForm.name.trim(),
-        code: roleForm.code.trim() || undefined,
-        description: roleForm.description.trim() || undefined,
-        permissions: selectedPerms,
-      });
-      toast.success(`Đã tạo chức vụ "${created.name}" thành công!`);
-      await loadRoles();
-      // Tự động chọn chức vụ mới tạo cho form Thêm nhân viên
-      setAddForm((prev) => ({ ...prev, role_id: String(created.id) }));
-      setShowCreateRoleModal(false);
-      setRoleForm({ name: '', code: '', description: '' });
-    } catch (err) {
-      toast.error(err.message || 'Lỗi khi tạo chức vụ mới');
-    } finally {
-      setCreatingRole(false);
+  // Mở modal phân quyền
+  const openRoleModal = (u) => {
+    setRoleModalUser(u);
+    // Chỉ nhận staff hoặc admin, mặc định staff nếu có lỗi dữ liệu
+    const userRole = u.role === 'admin' ? 'admin' : 'staff';
+    setSelectedRole(userRole);
+    setStaffTitle(u.staff_title || (userRole === 'admin' ? 'Quản trị viên' : 'Nhân viên'));
+    setSelectedPerms(Array.isArray(u.permissions) ? u.permissions : []);
+  };
+
+  // Áp dụng nhóm quyền mẫu (Preset)
+  const applyPreset = (presetKey) => {
+    const found = permMeta.preset_roles.find((p) => p.key === presetKey);
+    if (found) {
+      setStaffTitle(found.title);
+      setSelectedPerms(found.permissions);
     }
   };
 
-  // Toggle permission checkbox
-  const togglePermission = (permKey) => {
+  // Toggle 1 quyền
+  const togglePermission = (permId) => {
     setSelectedPerms((prev) =>
-      prev.includes(permKey) ? prev.filter((k) => k !== permKey) : [...prev, permKey]
+      prev.includes(permId) ? prev.filter((p) => p !== permId) : [...prev, permId]
     );
   };
 
   // Chọn tất cả quyền
-  const selectAllPermissions = () => {
-    const all = [];
-    AVAILABLE_PERM_MODULES.forEach((mod) => {
-      mod.actions.forEach((act) => all.push(act.key));
-    });
-    setSelectedPerms(all);
+  const selectAllPerms = () => {
+    setSelectedPerms(permMeta.permissions.map((p) => p.id));
   };
 
   // Bỏ chọn tất cả quyền
-  const clearAllPermissions = () => {
+  const clearAllPerms = () => {
     setSelectedPerms([]);
   };
 
-  // Đổi vai trò
-  const handleChangeRole = async (e) => {
+  // Lưu phân quyền
+  const handleSaveRole = async (e) => {
     e.preventDefault();
-    if (!showRoleModal) return;
-    setSubmitting(true);
+    if (!roleModalUser) return;
+    setSavingRole(true);
     try {
-      await changeStaffRole(showRoleModal.id, Number(selectedRoleId));
-      toast.success('Đổi vai trò nhân viên thành công');
-      setShowRoleModal(null);
-      loadStaff();
+      await updateUserRole(roleModalUser.id, {
+        role: selectedRole,
+        staff_title: selectedRole === 'staff' ? staffTitle : 'Quản trị viên',
+        permissions: selectedRole === 'staff' ? selectedPerms : permMeta.permissions.map((p) => p.id),
+      });
+      toast.success(`Đã cập nhật phân quyền cho ${roleModalUser.full_name}`);
+      setRoleModalUser(null);
+      list.reload();
     } catch (err) {
-      toast.error(err.message || 'Lỗi khi đổi vai trò');
+      toast.error(getErrorMessage(err));
     } finally {
-      setSubmitting(false);
+      setSavingRole(false);
     }
   };
 
-  // Đổi trạng thái (khóa / mở khóa)
-  const handleToggleStatus = async () => {
-    if (!statusConfirm) return;
-    const nextStatus = statusConfirm.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
-    setSubmitting(true);
-    try {
-      await changeStaffStatus(statusConfirm.id, nextStatus);
-      toast.success(nextStatus === 'LOCKED' ? 'Đã khóa tài khoản nhân viên' : 'Đã mở khóa tài khoản nhân viên');
-      setStatusConfirm(null);
-      loadStaff();
-    } catch (err) {
-      toast.error(err.message || 'Lỗi khi cập nhật trạng thái');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Đặt lại mật khẩu
-  const handleResetPassword = async (e) => {
+  // Tạo nhân viên mới
+  const handleCreateStaff = async (e) => {
     e.preventDefault();
-    if (!showResetModal) return;
-    if (newPassword.length < 8) {
-      toast.error('Mật khẩu mới phải có tối thiểu 8 ký tự');
+    if (!createForm.full_name.trim() || !createForm.email.trim() || !createForm.password.trim()) {
+      toast.error('Vui lòng điền đủ họ tên, email và mật khẩu');
       return;
     }
-    setSubmitting(true);
+    if (createForm.password.length < 6) {
+      toast.error('Mật khẩu tối thiểu 6 ký tự');
+      return;
+    }
+    setCreating(true);
     try {
-      await resetStaffPassword(showResetModal.id, newPassword);
-      toast.success('Đặt lại mật khẩu thành công');
-      setShowResetModal(null);
-      setNewPassword('');
+      await createStaff(createForm);
+      toast.success(`Đã tạo tài khoản ${createForm.full_name} thành công`);
+      setCreateModalOpen(false);
+      setCreateForm({
+        full_name: '',
+        email: '',
+        phone: '',
+        password: '',
+        role: 'staff',
+        staff_title: 'Nhân viên quầy vé',
+        permissions: ['bookings:manage', 'tickets:checkin'],
+      });
+      list.reload();
     } catch (err) {
-      toast.error(err.message || 'Lỗi khi đặt lại mật khẩu');
+      toast.error(getErrorMessage(err));
     } finally {
-      setSubmitting(false);
+      setCreating(false);
     }
   };
 
-  // Helper hiển thị badge vai trò
-  const getRoleMeta = (roleCode) => {
-    switch (roleCode) {
-      case 'ADMIN':
-        return {
-          name: 'Quản trị viên',
-          bg: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-          dot: 'bg-rose-400',
-        };
-      case 'MANAGER':
-        return {
-          name: 'Quản lý rạp',
-          bg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-          dot: 'bg-indigo-400',
-        };
-      case 'TICKET_STAFF':
-        return {
-          name: 'Nhân viên soát vé',
-          bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-          dot: 'bg-emerald-400',
-        };
-      case 'CONCESSION_STAFF':
-        return {
-          name: 'Nhân viên bắp nước',
-          bg: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-          dot: 'bg-amber-400',
-        };
-      default:
-        return {
-          name: roleCode,
-          bg: 'bg-purple-500/10 text-purple-300 border-purple-500/30',
-          dot: 'bg-purple-400',
-        };
-    }
-  };
+  // Nhóm danh sách quyền theo Category
+  const groupedPermissions = permMeta.permissions.reduce((acc, p) => {
+    const group = p.group || 'Chung';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(p);
+    return acc;
+  }, {});
+
+  const columns = [
+    {
+      key: 'name',
+      header: 'Họ tên & Email',
+      render: (u) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-slate-100 flex items-center gap-1.5">
+            {u.full_name}
+            {u.id === me?.id && (
+              <span className="rounded bg-brand-500/20 px-1.5 py-0.2 text-[10px] font-bold text-brand-300 border border-brand-500/30">
+                Bạn
+              </span>
+            )}
+          </span>
+          <span className="text-[11px] text-slate-400">{u.email}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'phone',
+      header: 'Số điện thoại',
+      render: (u) => <span className="font-mono text-xs">{u.phone || '—'}</span>,
+    },
+    {
+      key: 'role',
+      header: 'Vai trò & Chức danh',
+      render: (u) => {
+        if (u.role === 'admin') {
+          return (
+            <div className="flex flex-col items-start gap-1">
+              <Badge cls="bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                👑 Quản trị viên
+              </Badge>
+              <span className="text-[10px] text-amber-400/80 font-medium">Toàn quyền hệ thống</span>
+            </div>
+          );
+        }
+        const count = Array.isArray(u.permissions) ? u.permissions.length : 0;
+        return (
+          <div className="flex flex-col items-start gap-1">
+            <Badge cls="bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-semibold">
+              💼 {u.staff_title || 'Nhân viên'}
+            </Badge>
+            <span className="text-[10px] text-slate-400">
+              Được cấp: <span className="text-cyan-400 font-semibold">{count}</span>/{permMeta.permissions.length || 11} quyền
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      render: (u) => <ActiveBadge active={Boolean(u.is_active)} on="Hoạt động" off="Bị khóa" />,
+    },
+    {
+      key: 'created',
+      header: 'Ngày gia nhập',
+      render: (u) => <span className="text-xs text-slate-400">{formatDay(u.created_at)}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Thao tác',
+      className: 'text-right',
+      render: (u) => (
+        <div className="flex items-center justify-end gap-2">
+          {/* Nút Phân quyền */}
+          <button
+            onClick={() => openRoleModal(u)}
+            className="rounded-lg bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 border border-indigo-500/30 px-2.5 py-1 text-xs font-semibold transition cursor-pointer flex items-center gap-1"
+            title="Điều chỉnh vai trò và quyền hạn"
+          >
+            <span>🛡️</span>
+            <span>Phân quyền</span>
+          </button>
+
+          {/* Nút Khóa / Mở khóa */}
+          <button
+            onClick={() => setTarget(u)}
+            disabled={u.id === me?.id}
+            title={u.id === me?.id ? 'Bạn không thể tự khóa chính mình' : undefined}
+            className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 ${
+              u.is_active
+                ? 'bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30'
+                : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30'
+            }`}
+          >
+            {u.is_active ? 'Khóa' : 'Mở khóa'}
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const field =
+    'rounded-xl border border-slate-700/80 bg-[#0F1523] px-3.5 py-2 text-xs font-medium text-slate-200 placeholder-slate-500 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 transition';
+  const locking = target?.is_active;
 
   return (
-    <div className="space-y-8">
-      {/* Header trang (CHỈ CÓ DUY NHẤT 1 NÚT THÊM NHÂN VIÊN TẠI ĐÂY) */}
-      <PageHeader
-        title="Nhân viên & Phân quyền"
-        subtitle="Quản lý danh sách tài khoản nội bộ, phân bổ rạp và kiểm soát ma trận quyền hạn theo vai trò"
-      >
-        <Button onClick={() => setShowAddModal(true)} variant="primary" size="md">
-          ➕ Thêm nhân viên
-        </Button>
-      </PageHeader>
+    <div className="space-y-6">
+      {/* Header và Nút thêm nhân viên mới */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <PageHeader
+          title="Quản lý Nhân viên & Quản trị viên"
+          subtitle={list.data ? `Tổng cộng ${list.data.pagination.total} nhân sự trong hệ thống` : ' '}
+        />
 
-      {/* Thẻ thống kê nhanh */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <p className="text-xs text-slate-400 font-medium">Tổng nhân sự</p>
-          <p className="text-2xl font-bold text-white mt-1">{total}</p>
-        </div>
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20">
-          <p className="text-xs text-rose-300 font-medium">Quản trị viên (ADMIN)</p>
-          <p className="text-2xl font-bold text-rose-400 mt-1">
-            {staffList.filter((s) => s.role === 'ADMIN').length}
-          </p>
-        </div>
-        <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-          <p className="text-xs text-indigo-300 font-medium">Quản lý rạp (MANAGER)</p>
-          <p className="text-2xl font-bold text-indigo-400 mt-1">
-            {staffList.filter((s) => s.role === 'MANAGER').length}
-          </p>
-        </div>
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-xs text-emerald-300 font-medium">Soát vé (TICKET_STAFF)</p>
-          <p className="text-2xl font-bold text-emerald-400 mt-1">
-            {staffList.filter((s) => s.role === 'TICKET_STAFF').length}
-          </p>
-        </div>
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 col-span-2 sm:col-span-1">
-          <p className="text-xs text-amber-300 font-medium">Bắp nước (CONCESSION)</p>
-          <p className="text-2xl font-bold text-amber-400 mt-1">
-            {staffList.filter((s) => s.role === 'CONCESSION_STAFF').length}
-          </p>
-        </div>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="rounded-xl bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-500 hover:to-pink-500 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-brand-600/30 transition cursor-pointer flex items-center justify-center gap-2 shrink-0 self-start sm:self-auto"
+        >
+          <span>➕</span>
+          <span>+ Thêm nhân viên mới</span>
+        </button>
       </div>
 
-      {/* Thanh tìm kiếm & Bộ lọc (ĐÃ BỎ NÚT TRÙNG LẶP THEO YÊU CẦU) */}
-      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="w-full sm:w-80 relative">
-          <input
-            type="text"
-            placeholder="Tìm theo tên, email, SĐT..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 transition"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-2.5 text-xs text-slate-500 hover:text-white"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto items-center">
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
-          >
-            <option value="">Tất cả vai trò ({roles.length})</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.code}>
-                {r.code} - {r.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang hoạt động</option>
-            <option value="LOCKED">Đã khóa</option>
-          </select>
-        </div>
+      {/* Bộ lọc: Tìm kiếm, Vai trò (Chỉ Tất cả / Nhân viên / Quản trị viên), Trạng thái */}
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="search"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Tìm theo tên, email, số điện thoại..."
+          aria-label="Tìm nhân sự"
+          className={`${field} w-72`}
+        />
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          aria-label="Lọc vai trò"
+          className={field}
+        >
+          <option value="">Tất cả vai trò</option>
+          <option value="staff">Nhân viên</option>
+          <option value="admin">Quản trị viên</option>
+        </select>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          aria-label="Lọc trạng thái"
+          className={field}
+        >
+          <option value="">Mọi trạng thái</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="locked">Bị khóa</option>
+        </select>
       </div>
 
-      {/* Bảng danh sách nhân viên */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-[11px] font-bold uppercase text-slate-400 border-b border-slate-800 tracking-wider">
-              <tr>
-                <th className="px-5 py-3.5">Nhân viên</th>
-                <th className="px-5 py-3.5">Liên hệ</th>
-                <th className="px-5 py-3.5">Vai trò</th>
-                <th className="px-5 py-3.5">Rạp phụ trách</th>
-                <th className="px-5 py-3.5">Trạng thái</th>
-                <th className="px-5 py-3.5">Đăng nhập cuối</th>
-                <th className="px-5 py-3.5 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {loading ? (
-                <tr>
-                  <td colSpan="7" className="px-5 py-8 text-center text-slate-500">
-                    Đang tải dữ liệu nhân viên...
-                  </td>
-                </tr>
-              ) : staffList.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="px-5 py-8 text-center text-slate-500">
-                    Không tìm thấy nhân viên nào phù hợp
-                  </td>
-                </tr>
-              ) : (
-                staffList.map((item) => {
-                  const isSelf = Number(item.id) === Number(currentUser?.id);
-                  const roleObj = roles.find((r) => r.code === item.role);
-                  const meta = getRoleMeta(item.role);
-
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
-                      {/* Tên & Avatar */}
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-500/20 to-pink-500/20 border border-brand-500/30 flex items-center justify-center font-bold text-white shrink-0">
-                            {item.full_name?.charAt(0) || 'U'}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-white flex items-center gap-2">
-                              <span>{item.full_name}</span>
-                              {isSelf && (
-                                <span className="text-[10px] bg-brand-500/20 text-brand-300 px-1.5 py-0.2 rounded border border-brand-500/30">
-                                  Bạn
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[11px] text-slate-400">ID: #{item.id}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Email & SĐT */}
-                      <td className="px-5 py-3.5">
-                        <div className="font-mono text-slate-200">{item.email}</div>
-                        <div className="text-[11px] text-slate-400">{item.phone || 'Chưa cập nhật'}</div>
-                      </td>
-
-                      {/* Vai trò */}
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border ${meta.bg}`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
-                          {roleObj?.name || item.role_name || item.role}
-                        </span>
-                      </td>
-
-                      {/* Rạp phụ trách */}
-                      <td className="px-5 py-3.5">
-                        {item.role === 'ADMIN' ? (
-                          <span className="text-slate-400 italic">Toàn hệ thống</span>
-                        ) : item.cinema_name ? (
-                          <span className="font-medium text-slate-200">{item.cinema_name}</span>
-                        ) : (
-                          <span className="text-slate-500">Chưa chỉ định</span>
-                        )}
-                      </td>
-
-                      {/* Trạng thái */}
-                      <td className="px-5 py-3.5">
-                        {item.status === 'ACTIVE' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            Hoạt động
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[11px] font-semibold">
-                            <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
-                            Đã khóa
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Lần đăng nhập cuối */}
-                      <td className="px-5 py-3.5 text-slate-400">
-                        {item.last_login_at ? formatDateTime(item.last_login_at) : 'Chưa đăng nhập'}
-                      </td>
-
-                      {/* Nút thao tác */}
-                      <td className="px-5 py-3.5 text-right space-x-1">
-                        <button
-                          onClick={() => {
-                            setSelectedRoleId(String(item.role_id || 3));
-                            setShowRoleModal(item);
-                          }}
-                          disabled={isSelf}
-                          title={isSelf ? 'Không thể đổi vai trò của chính mình' : 'Đổi vai trò'}
-                          className={`p-1.5 rounded-lg border text-xs transition ${
-                            isSelf
-                              ? 'opacity-30 cursor-not-allowed border-slate-800 text-slate-600'
-                              : 'border-slate-700 bg-slate-800 text-slate-200 hover:text-white hover:border-indigo-500 cursor-pointer'
-                          }`}
-                        >
-                          🛡️ Đổi vai trò
-                        </button>
-
-                        <button
-                          onClick={() => setShowResetModal(item)}
-                          title="Đặt lại mật khẩu"
-                          className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:text-white hover:border-amber-500 transition text-xs cursor-pointer"
-                        >
-                          🔑 Đổi mật khẩu
-                        </button>
-
-                        <button
-                          onClick={() => setStatusConfirm(item)}
-                          disabled={isSelf}
-                          title={isSelf ? 'Không thể khóa tài khoản của chính mình' : 'Khóa/Mở khóa'}
-                          className={`p-1.5 rounded-lg border text-xs transition cursor-pointer ${
-                            isSelf
-                              ? 'opacity-30 cursor-not-allowed border-slate-800 text-slate-600'
-                              : item.status === 'ACTIVE'
-                              ? 'border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20'
-                              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                          }`}
-                        >
-                          {item.status === 'ACTIVE' ? '🔒 Khóa' : '🔓 Mở khóa'}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Bảng danh sách */}
+      <AdminTable
+        columns={columns}
+        rows={rows}
+        loading={list.loading}
+        error={list.error}
+        onRetry={list.reload}
+        emptyText="Không tìm thấy nhân sự nào phù hợp"
+      />
+      {list.data && (
+        <Pagination
+          page={list.data.pagination.page}
+          totalPages={list.data.pagination.totalPages}
+          onChange={setPage}
+        />
+      )}
 
       {/* ============================================================== */}
-      {/* KHU VỰC: MA TRẬN PHÂN QUYỀN VAI TRÒ (BAO GỒM NHÂN VIÊN BẮP NƯỚC) */}
-      {/* ============================================================== */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-2">
-          <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <span>📋</span> Ma trận phân quyền chi tiết (Role & Permission Matrix)
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Quy tắc quyền hạn áp dụng cho từng vai trò trên toàn bộ hệ thống API và giao diện quản trị.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono">
-            <span><b>V</b>: Xem (View)</span>
-            <span><b>C</b>: Tạo (Create)</span>
-            <span><b>U</b>: Sửa (Update)</span>
-            <span><b>D</b>: Xóa (Delete)</span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-[11px] font-bold uppercase text-slate-400 border-b border-slate-800">
-              <tr>
-                <th className="px-4 py-3">Chức năng / Module nghiệp vụ</th>
-                <th className="px-4 py-3 text-center text-rose-400 bg-rose-500/5">ADMIN (Quản trị viên)</th>
-                <th className="px-4 py-3 text-center text-indigo-400 bg-indigo-500/5">MANAGER (Quản lý rạp)</th>
-                <th className="px-4 py-3 text-center text-emerald-400 bg-emerald-500/5">TICKET_STAFF (Soát vé)</th>
-                <th className="px-4 py-3 text-center text-amber-400 bg-amber-500/5">CONCESSION (Bắp nước)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-              {PERMISSIONS_MATRIX_DATA.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/30">
-                  <td className="px-4 py-2.5 font-sans font-medium text-slate-200">{row.module}</td>
-                  <td className="px-4 py-2.5 text-center text-rose-400 bg-rose-500/5 font-bold">{row.admin}</td>
-                  <td className="px-4 py-2.5 text-center text-indigo-400 bg-indigo-500/5 font-bold">{row.manager}</td>
-                  <td className="px-4 py-2.5 text-center text-emerald-400 bg-emerald-500/5 font-bold">{row.staff}</td>
-                  <td className="px-4 py-2.5 text-center text-amber-400 bg-amber-500/5 font-bold">{row.concession}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-300 flex items-center gap-2">
-          <span>⚠️</span>
-          <span>
-            <strong>Lưu ý bảo mật quan trọng:</strong> Tất cả tài khoản nội bộ (ADMIN, MANAGER, TICKET_STAFF, CONCESSION_STAFF) đều không thể mua vé xem phim. Quyền mua vé và thanh toán chỉ áp dụng cho tài khoản <strong>CUSTOMER (Khách hàng)</strong>.
-          </span>
-        </div>
-      </div>
-
-      {/* ============================================================== */}
-      {/* MODAL 1: THÊM NHÂN VIÊN MỚI */}
+      {/* MODAL PHÂN QUYỀN (CHỈ CÓ 2 LỰA CHỌN: NHÂN VIÊN VÀ QUẢN TRỊ VIÊN) */}
       {/* ============================================================== */}
       <Modal
-        open={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Thêm tài khoản nhân viên mới"
-      >
-        <form onSubmit={handleCreateStaff} className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Họ và tên <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Nguyễn Văn A"
-              value={addForm.full_name}
-              onChange={(e) => setAddForm({ ...addForm, full_name: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Email đăng nhập <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="nhanvien@cinema.vn"
-              value={addForm.email}
-              onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Mật khẩu khởi tạo (tối thiểu 8 ký tự) <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              placeholder="••••••••"
-              value={addForm.password}
-              onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Số điện thoại liên hệ
-            </label>
-            <input
-              type="tel"
-              placeholder="0901234567"
-              value={addForm.phone}
-              onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            />
-          </div>
-
-          {/* VÙNG CHỌN CHỨC VỤ + NÚT TẠO CHỨC VỤ MỚI */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Vai trò chức vụ <span className="text-rose-500">*</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowCreateRoleModal(true)}
-                className="text-xs text-brand-400 hover:text-brand-300 font-semibold underline flex items-center gap-1 transition cursor-pointer"
-              >
-                <span>✨</span>
-                <span>+ Tạo chức vụ mới</span>
-              </button>
-            </div>
-            <select
-              value={addForm.role_id}
-              onChange={(e) => setAddForm({ ...addForm, role_id: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            >
-              {roles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.code} - {r.name} {r.description ? `(${r.description})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {addForm.role_id !== '1' && (
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Cụm rạp phụ trách
-              </label>
-              <select
-                value={addForm.cinema_id}
-                onChange={(e) => setAddForm({ ...addForm, cinema_id: e.target.value })}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-              >
-                <option value="">-- Chọn cụm rạp --</option>
-                {cinemas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.city})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
-            <Button variant="secondary" onClick={() => setShowAddModal(false)} type="button">
-              Hủy
-            </Button>
-            <Button variant="primary" type="submit" disabled={submitting}>
-              {submitting ? 'Đang tạo...' : 'Tạo tài khoản'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ============================================================== */}
-      {/* MODAL MỚI: TẠO CHỨC VỤ / VAI TRÒ CÔNG VIỆC MỚI */}
-      {/* ============================================================== */}
-      <Modal
-        open={showCreateRoleModal}
-        onClose={() => setShowCreateRoleModal(false)}
-        title="Tạo chức vụ / vai trò công việc mới"
+        open={Boolean(roleModalUser)}
+        onClose={() => setRoleModalUser(null)}
+        title={`Phân quyền tài khoản: ${roleModalUser?.full_name || ''}`}
         maxWidth="max-w-2xl"
       >
-        <form onSubmit={handleCreateRole} className="p-6 space-y-4">
-          <p className="text-xs text-slate-400">
-            Thêm chức vụ công việc mới vào hệ thống và lựa chọn các quyền hạn cụ thể mà chức vụ này được phép thao tác.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleSaveRole} className="p-5 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+          {/* Thông tin tài khoản */}
+          <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Tên chức vụ công việc <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="VD: Kế toán rạp, Kỹ thuật phòng chiếu..."
-                value={roleForm.name}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  // Tự động tạo mã vai trò nếu chưa nhập
-                  const autoCode = val
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .replace(/[^a-zA-Z0-9]/g, '_')
-                    .toUpperCase()
-                    .replace(/_+/g, '_')
-                    .slice(0, 25);
-                  setRoleForm({
-                    ...roleForm,
-                    name: val,
-                    code: roleForm.code ? roleForm.code : autoCode,
-                  });
-                }}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-              />
+              <span className="text-slate-400 block">Email:</span>
+              <span className="font-mono font-semibold text-slate-200">{roleModalUser?.email}</span>
             </div>
-
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Mã hệ thống (Code)
-              </label>
-              <input
-                type="text"
-                placeholder="VD: ACCOUNTANT, PROJECTIONIST..."
-                value={roleForm.code}
-                onChange={(e) => setRoleForm({ ...roleForm, code: e.target.value.toUpperCase() })}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono uppercase focus:outline-none focus:border-brand-500 transition"
-              />
+              <span className="text-slate-400 block">Số điện thoại:</span>
+              <span className="font-mono text-slate-200">{roleModalUser?.phone || 'Chưa cập nhật'}</span>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Mô tả trách nhiệm công việc
+          {/* Chọn vai trò chính: ĐÃ XÓA KHÁCH HÀNG, CHỈ CÒN NHÂN VIÊN VÀ QUẢN TRỊ VIÊN */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Chọn vai trò trong hệ thống <span className="text-rose-400">*</span>
             </label>
-            <input
-              type="text"
-              placeholder="VD: Quản lý chứng từ, kiểm tra suất chiếu..."
-              value={roleForm.description}
-              onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { key: 'staff', label: 'Nhân viên', desc: 'Truy cập quản lý theo các quyền hạn được tích chọn chi tiết bên dưới', icon: '💼' },
+                { key: 'admin', label: 'Quản trị viên', desc: 'Toàn quyền điều hành toàn bộ hệ thống (tất cả các tính năng)', icon: '👑' },
+              ].map((r) => (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() => setSelectedRole(r.key)}
+                  className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                    selectedRole === r.key
+                      ? 'border-brand-500 bg-brand-500/15 text-white ring-1 ring-brand-500/50'
+                      : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  }`}
+                >
+                  <p className="font-bold text-xs flex items-center gap-2">
+                    <span className="text-base">{r.icon}</span>
+                    <span>{r.label}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{r.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Chọn quyền cho chức vụ mới */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Phân quyền cho chức vụ ({selectedPerms.length} quyền đã chọn)
-              </label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={selectAllPermissions}
-                  className="text-[11px] text-brand-400 hover:text-brand-300 underline cursor-pointer"
-                >
-                  Chọn tất cả
-                </button>
-                <span className="text-slate-600">|</span>
-                <button
-                  type="button"
-                  onClick={clearAllPermissions}
-                  className="text-[11px] text-slate-400 hover:text-white underline cursor-pointer"
-                >
-                  Bỏ chọn tất cả
-                </button>
+          {/* Khi chọn Quản trị viên: Hiển thị thông báo toàn quyền */}
+          {selectedRole === 'admin' && (
+            <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs flex items-center gap-3">
+              <span className="text-2xl shrink-0">👑</span>
+              <p>
+                <b>Quản trị viên</b> có toàn quyền quản trị cao nhất, truy cập mọi chức năng (phim, rạp, phòng chiếu, đơn vé, phân quyền nhân sự, cài đặt hệ thống).
+              </p>
+            </div>
+          )}
+
+          {/* Cấu hình chi tiết cho Nhân viên */}
+          {selectedRole === 'staff' && (
+            <div className="space-y-4 pt-2 border-t border-slate-800">
+              {/* Chức danh / Vị trí */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Chức danh / Vị trí làm việc <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={staffTitle}
+                  onChange={(e) => setStaffTitle(e.target.value)}
+                  placeholder="VD: Nhân viên quầy vé, Quản lý ca chiếu..."
+                  className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  required
+                />
+              </div>
+
+              {/* Nhóm quyền mẫu nhanh (Presets) */}
+              <div>
+                <span className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Chọn nhanh theo nhóm quyền mẫu:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {permMeta.preset_roles.map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => applyPreset(p.key)}
+                      className="px-2.5 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-brand-500/20 hover:text-brand-300 hover:border-brand-500/40 transition cursor-pointer"
+                    >
+                      ⚡ {p.title}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={selectAllPerms}
+                    className="px-2 py-1 text-xs rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer"
+                  >
+                    ✓ Chọn tất cả
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearAllPerms}
+                    className="px-2 py-1 text-xs rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition cursor-pointer"
+                  >
+                    ✕ Bỏ chọn
+                  </button>
+                </div>
+              </div>
+
+              {/* Danh sách Checkbox quyền chi tiết theo nhóm */}
+              <div className="space-y-4">
+                <span className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Danh sách quyền chi tiết ({selectedPerms.length} quyền đã chọn):
+                </span>
+
+                <div className="space-y-4">
+                  {Object.entries(groupedPermissions).map(([category, items]) => (
+                    <div key={category} className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-3.5 space-y-2">
+                      <h5 className="text-[11px] font-bold uppercase tracking-wide text-brand-400">
+                        {category}
+                      </h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {items.map((perm) => {
+                          const checked = selectedPerms.includes(perm.id);
+                          return (
+                            <label
+                              key={perm.id}
+                              className={`flex items-start gap-2.5 p-2 rounded-lg border transition cursor-pointer select-none ${
+                                checked
+                                  ? 'border-brand-500/50 bg-brand-500/10 text-white'
+                                  : 'border-slate-800/60 bg-slate-900/30 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => togglePermission(perm.id)}
+                                className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold leading-tight">{perm.name}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5 leading-snug">
+                                  {perm.description}
+                                </p>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="max-h-60 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-3">
-              {AVAILABLE_PERM_MODULES.map((mod) => (
-                <div key={mod.id} className="border-b border-slate-800/60 pb-2.5 last:border-b-0 last:pb-0">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span>{mod.icon}</span>
-                    <span className="text-xs font-bold text-slate-200">{mod.label}</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pl-6">
-                    {mod.actions.map((act) => {
-                      const isChecked = selectedPerms.includes(act.key);
-                      return (
-                        <label
-                          key={act.key}
-                          className={`flex items-center gap-2 p-1.5 rounded-lg border text-xs cursor-pointer select-none transition ${
-                            isChecked
-                              ? 'bg-brand-500/15 border-brand-500/40 text-brand-300'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => togglePermission(act.key)}
-                            className="rounded border-slate-700 text-brand-500 focus:ring-0"
-                          />
-                          <span className="truncate">{act.label}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
+          {/* Nút hành động */}
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setRoleModalUser(null)}
+              className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition cursor-pointer"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              disabled={savingRole}
+              className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-xs font-bold text-white shadow-lg shadow-brand-600/30 transition cursor-pointer disabled:opacity-50"
+            >
+              {savingRole ? 'Đang lưu...' : 'Lưu phân quyền'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ============================================================== */}
+      {/* MODAL THÊM NHÂN VIÊN MỚI */}
+      {/* ============================================================== */}
+      <Modal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Thêm tài khoản nhân sự mới"
+        maxWidth="max-w-2xl"
+      >
+        <form onSubmit={handleCreateStaff} className="p-5 sm:p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          {/* Chọn vai trò khi tạo: Nhân viên hoặc Quản trị viên */}
+          <div>
+            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              Vai trò tài khoản <span className="text-rose-400">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: 'staff', label: 'Nhân viên', icon: '💼' },
+                { key: 'admin', label: 'Quản trị viên', icon: '👑' },
+              ].map((r) => (
+                <button
+                  key={r.key}
+                  type="button"
+                  onClick={() =>
+                    setCreateForm({
+                      ...createForm,
+                      role: r.key,
+                      staff_title: r.key === 'admin' ? 'Quản trị viên' : 'Nhân viên quầy vé',
+                    })
+                  }
+                  className={`p-3 rounded-xl border text-center font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                    createForm.role === r.key
+                      ? 'border-brand-500 bg-brand-500/15 text-white ring-1 ring-brand-500/50'
+                      : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <span>{r.icon}</span>
+                  <span>{r.label}</span>
+                </button>
               ))}
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
-            <Button
-              variant="secondary"
-              onClick={() => setShowCreateRoleModal(false)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                Họ và tên <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={createForm.full_name}
+                onChange={(e) => setCreateForm({ ...createForm, full_name: e.target.value })}
+                placeholder="Nguyễn Văn A"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                Email đăng nhập <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                placeholder="nhanvien@cinebooking.vn"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                Mật khẩu khởi tạo <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="password"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                placeholder="Tối thiểu 6 ký tự"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">Số điện thoại</label>
+              <input
+                type="tel"
+                value={createForm.phone}
+                onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                placeholder="0912345678"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                Chức danh / Vị trí làm việc <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={createForm.staff_title}
+                onChange={(e) => setCreateForm({ ...createForm, staff_title: e.target.value })}
+                placeholder="Nhân viên quầy vé, Lịch chiếu..."
+                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Phân quyền chi tiết nếu vai trò là Nhân viên */}
+          {createForm.role === 'staff' && (
+            <>
+              {/* Nhóm mẫu phân quyền */}
+              <div className="space-y-2 pt-2 border-t border-slate-800">
+                <span className="block text-xs font-bold text-slate-300">Áp dụng mẫu phân quyền:</span>
+                <div className="flex flex-wrap gap-2">
+                  {permMeta.preset_roles.map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() =>
+                        setCreateForm({
+                          ...createForm,
+                          staff_title: p.title,
+                          permissions: p.permissions,
+                        })
+                      }
+                      className="px-2.5 py-1 text-xs rounded-lg border border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-brand-500/20 hover:text-brand-300 hover:border-brand-500/40 transition cursor-pointer"
+                    >
+                      ⚡ {p.title}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCreateForm({
+                        ...createForm,
+                        permissions: permMeta.permissions.map((p) => p.id),
+                      })
+                    }
+                    className="px-2 py-1 text-xs rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition cursor-pointer"
+                  >
+                    ✓ Chọn tất cả
+                  </button>
+                </div>
+              </div>
+
+              {/* Checkboxes phân quyền */}
+              <div className="space-y-3">
+                <span className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Quyền hạn cấp cho nhân viên ({createForm.permissions.length} quyền):
+                </span>
+                <div className="space-y-3">
+                  {Object.entries(groupedPermissions).map(([category, items]) => (
+                    <div key={category} className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-3 space-y-1.5">
+                      <h5 className="text-[10px] font-bold uppercase tracking-wide text-brand-400">{category}</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {items.map((perm) => {
+                          const checked = createForm.permissions.includes(perm.id);
+                          return (
+                            <label
+                              key={perm.id}
+                              className={`flex items-start gap-2 p-1.5 rounded-lg border transition cursor-pointer text-xs select-none ${
+                                checked
+                                  ? 'border-brand-500/40 bg-brand-500/10 text-white'
+                                  : 'border-slate-800 bg-slate-900/20 text-slate-400'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  const newPerms = checked
+                                    ? createForm.permissions.filter((p) => p !== perm.id)
+                                    : [...createForm.permissions, perm.id];
+                                  setCreateForm({ ...createForm, permissions: newPerms });
+                                }}
+                                className="mt-0.5 h-3.5 w-3.5 rounded border-slate-700 bg-slate-900 text-brand-600"
+                              />
+                              <span className="font-medium text-[11px] truncate">{perm.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+            <button
               type="button"
+              onClick={() => setCreateModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300 hover:bg-slate-800 transition cursor-pointer"
             >
               Hủy
-            </Button>
-            <Button variant="primary" type="submit" disabled={creatingRole}>
-              {creatingRole ? 'Đang tạo...' : 'Lưu chức vụ mới'}
-            </Button>
+            </button>
+            <button
+              type="submit"
+              disabled={creating}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-500 hover:to-pink-500 text-xs font-bold text-white shadow-lg shadow-brand-600/30 transition cursor-pointer disabled:opacity-50"
+            >
+              {creating ? 'Đang tạo...' : 'Tạo nhân sự'}
+            </button>
           </div>
         </form>
       </Modal>
 
-      {/* ============================================================== */}
-      {/* MODAL 2: ĐỔI VAI TRÒ */}
-      {/* ============================================================== */}
-      <Modal
-        open={Boolean(showRoleModal)}
-        onClose={() => setShowRoleModal(null)}
-        title={`Đổi vai trò: ${showRoleModal?.full_name}`}
-      >
-        <form onSubmit={handleChangeRole} className="p-6 space-y-4">
-          <p className="text-xs text-slate-400">
-            Chọn vai trò mới cho tài khoản <strong className="text-white">{showRoleModal?.email}</strong>. Quyền hạn sẽ được cập nhật ngay lập tức.
-          </p>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Vai trò mới <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={selectedRoleId}
-              onChange={(e) => setSelectedRoleId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            >
-              {roles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.code} - {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
-            <Button variant="secondary" onClick={() => setShowRoleModal(null)} type="button">
-              Hủy
-            </Button>
-            <Button variant="primary" type="submit" disabled={submitting}>
-              {submitting ? 'Đang lưu...' : 'Lưu vai trò'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ============================================================== */}
-      {/* MODAL 3: ĐẶT LẠI MẬT KHẨU */}
-      {/* ============================================================== */}
-      <Modal
-        open={Boolean(showResetModal)}
-        onClose={() => {
-          setShowResetModal(null);
-          setNewPassword('');
-        }}
-        title={`Đặt lại mật khẩu: ${showResetModal?.full_name}`}
-      >
-        <form onSubmit={handleResetPassword} className="p-6 space-y-4">
-          <p className="text-xs text-slate-400">
-            Nhập mật khẩu mới cho tài khoản <strong className="text-white">{showResetModal?.email}</strong> (tối thiểu 8 ký tự).
-          </p>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Mật khẩu mới <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              placeholder="••••••••"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500 transition"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowResetModal(null);
-                setNewPassword('');
-              }}
-              type="button"
-            >
-              Hủy
-            </Button>
-            <Button variant="primary" type="submit" disabled={submitting}>
-              {submitting ? 'Đang đặt lại...' : 'Đặt lại mật khẩu'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ============================================================== */}
-      {/* DIALOG XÁC NHẬN KHÓA / MỞ KHÓA */}
-      {/* ============================================================== */}
+      {/* Xác nhận Khóa / Mở khóa tài khoản */}
       <ConfirmDialog
-        open={Boolean(statusConfirm)}
-        onClose={() => setStatusConfirm(null)}
-        onConfirm={handleToggleStatus}
-        title={statusConfirm?.status === 'ACTIVE' ? 'Khóa tài khoản nhân viên?' : 'Mở khóa tài khoản?'}
-        message={
-          statusConfirm?.status === 'ACTIVE'
-            ? `Bạn có chắc muốn khóa tài khoản của ${statusConfirm?.full_name} (${statusConfirm?.email})? Nhân viên này sẽ không thể đăng nhập vào hệ thống.`
-            : `Bạn có muốn mở khóa lại cho tài khoản ${statusConfirm?.full_name} (${statusConfirm?.email})?`
-        }
-        confirmText={statusConfirm?.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa'}
-        confirmVariant={statusConfirm?.status === 'ACTIVE' ? 'danger' : 'primary'}
-      />
+        open={Boolean(target)}
+        title={locking ? 'Khóa tài khoản nhân sự' : 'Mở khóa tài khoản nhân sự'}
+        confirmLabel={locking ? 'Khóa' : 'Mở khóa'}
+        danger={Boolean(locking)}
+        busy={busy}
+        onConfirm={handleConfirmStatus}
+        onCancel={() => setTarget(null)}
+      >
+        {locking ? (
+          <>
+            Khóa tài khoản <b>{target?.full_name}</b> ({target?.email})? Người này sẽ không đăng nhập được và phiên đang dùng cũng bị chặn ngay lập tức.
+          </>
+        ) : (
+          <>
+            Mở khóa tài khoản <b>{target?.full_name}</b> ({target?.email})? Người này sẽ đăng nhập và thực hiện công việc được trở lại.
+          </>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

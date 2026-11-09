@@ -106,8 +106,18 @@ exports.adminList = async ({ search, role, status }, { limit, offset }) => {
     params.push(like, like, like);
   }
   if (role) {
-    conds.push('u.role = ?');
-    params.push(String(role));
+    const roles = String(role)
+      .split(',')
+      .map((r) => r.trim().toLowerCase())
+      .filter(Boolean);
+    if (roles.length === 1) {
+      conds.push('u.role = ?');
+      params.push(roles[0]);
+    } else if (roles.length > 1) {
+      const placeholders = roles.map(() => '?').join(', ');
+      conds.push(`u.role IN (${placeholders})`);
+      params.push(...roles);
+    }
   }
   if (status === 'active') conds.push('u.is_active = 1');
   if (status === 'locked') conds.push('u.is_active = 0');

@@ -57,4 +57,6 @@ export const updateUserRole = (id, data) =>
   api.put(`/admin/users/${id}/role`, data).then((res) => res.data.data.user);
 export const createStaff = (data) =>
   api.post('/admin/users/staff', data).then((res) => res.data.data.user);
+export const createCustomer = (data) =>
+  api.post('/admin/users/customer', data).then((res) => res.data.data.user);
 export const getPermissionsList = () => api.get('/admin/permissions').then(unwrap);

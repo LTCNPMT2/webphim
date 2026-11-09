@@ -35,6 +35,17 @@ exports.createStaff = asyncHandler(async (req, res) => {
   sendSuccess(res, { user }, 'Tạo tài khoản nhân viên thành công', 201);
 });
 
+exports.createCustomer = asyncHandler(async (req, res) => {
+  const { full_name, email, password, phone } = req.body;
+  const user = await adminUserService.createCustomer(req.user, {
+    full_name,
+    email,
+    password,
+    phone,
+  });
+  sendSuccess(res, { user }, 'Tạo tài khoản khách hàng thành công', 201);
+});
+
 exports.getPermissions = asyncHandler(async (req, res) => {
   const data = await adminUserService.getPermissions();
   sendSuccess(res, data, 'Lấy danh mục phân quyền thành công');

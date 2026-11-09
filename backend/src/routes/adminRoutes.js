@@ -38,6 +38,7 @@ const {
   userStatusRules,
   userRoleRules,
   createStaffRules,
+  createCustomerRules,
   checkInRules,
   listAdminBookingRules,
 } = require('../validators/adminValidator');
@@ -113,6 +114,7 @@ router.post(
 // ----- Khách hàng & Phân quyền nhân viên (Chỉ Admin hoặc ai có quyền users:manage) -----
 router.get('/users', requirePermission('users:manage'), listUserRules, validate, adminUser.list);
 router.post('/users/staff', requirePermission('users:manage'), createStaffRules, validate, adminUser.createStaff);
+router.post('/users/customer', requirePermission('users:manage'), createCustomerRules, validate, adminUser.createCustomer);
 router.put('/users/:id/status', requirePermission('users:manage'), idParam, userStatusRules, validate, adminUser.setStatus);
 router.put('/users/:id/role', requirePermission('users:manage'), idParam, userRoleRules, validate, adminUser.setRole);
 

@@ -15,13 +15,26 @@ exports.listUserRules = [
   query('search').optional().isString().withMessage('search không hợp lệ'),
   query('role')
     .optional({ values: 'falsy' })
-    .isIn(['user', 'staff', 'admin'])
-    .withMessage('role chỉ nhận user, staff hoặc admin'),
+    .custom((val) => {
+      const parts = String(val).split(',').map((p) => p.trim());
+      const valid = ['user', 'staff', 'admin'];
+      if (!parts.every((p) => valid.includes(p))) {
+        throw new Error('role chỉ nhận user, staff hoặc admin');
+      }
+      return true;
+    }),
   query('status')
     .optional({ values: 'falsy' })
     .isIn(['active', 'locked'])
     .withMessage('status chỉ nhận active hoặc locked'),
   ...pageQuery,
+];
+
+exports.createCustomerRules = [
+  body('full_name').notEmpty().withMessage('Họ tên không được để trống').isLength({ max: 100 }),
+  body('email').isEmail().withMessage('Email không hợp lệ').normalizeEmail(),
+  body('password').isLength({ min: 6 }).withMessage('Mật khẩu tối thiểu 6 ký tự'),
+  body('phone').optional({ values: 'falsy' }).isString().trim(),
 ];
 
 exports.userStatusRules = [

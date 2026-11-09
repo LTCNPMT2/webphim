@@ -56,6 +56,23 @@ exports.updateRole = async (admin, id, { role, staff_title, permissions = [] }) 
   return userModel.findById(id);
 };
 
+// Thêm khách hàng mới trực tiếp từ trang quản trị
+exports.createCustomer = async (admin, { full_name, email, password, phone }) => {
+  if (await userModel.existsByEmail(email)) {
+    throw new ApiError(409, 'Email đã được sử dụng bởi tài khoản khác');
+  }
+
+  const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+  const newId = await userModel.create({
+    full_name: full_name.trim(),
+    email: email.trim().toLowerCase(),
+    password_hash,
+    phone: phone?.trim() || null,
+  });
+
+  return userModel.findById(newId);
+};
+
 // Thêm nhân viên mới trực tiếp từ trang quản trị
 exports.createStaff = async (admin, { full_name, email, password, phone, role = 'staff', staff_title, permissions = [] }) => {
   if (await userModel.existsByEmail(email)) {
