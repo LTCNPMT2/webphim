@@ -60,7 +60,15 @@ export default function MoMoBookingModal({
   cinema,
 }) {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user, setUser, isAdmin, isStaff } = useAuth();
+
+  // Xác định vai trò: nếu là Quản trị viên (ADMIN) hoặc Nhân viên (STAFF / NHAN_VIEN)
+  const userRole = String(user?.role || '').toLowerCase();
+  const isStaffOrAdmin = Boolean(
+    isAdmin ||
+    isStaff ||
+    ['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)
+  );
 
   // Bước hiện tại: 1 = Chọn ghế, 2 = Chọn Combo, 3 = Quét mã QR, 4 = Thành công
   const [step, setStep] = useState(1);
@@ -313,8 +321,25 @@ export default function MoMoBookingModal({
     return cleaned || 'MM890573';
   }, [createdBooking?.booking_code]);
 
+  // Chuyển từ Bước 1 (Chọn ghế) sang Bước 2 (Combo bắp nước)
+  const handleBuyTickets = () => {
+    if (isStaffOrAdmin) {
+      toast.error('Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.');
+      return;
+    }
+    if (selectedSeats.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một ghế.');
+      return;
+    }
+    setStep(2);
+  };
+
   // Chuyển từ Bước 2 (Combo) sang Bước 3 (Quét mã QR SePay)
   const handleProceedToPayment = async () => {
+    if (isStaffOrAdmin) {
+      toast.error('Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.');
+      return;
+    }
     const cleanPhone = (customerPhone || user?.phone || '').trim();
     if (!cleanPhone) {
       setPhoneError('Vui lòng nhập số điện thoại để nhận thông tin vé và mã QR');
@@ -587,6 +612,16 @@ export default function MoMoBookingModal({
             </button>
           </div>
 
+          {/* Thông báo tài khoản nội bộ */}
+          {isStaffOrAdmin && (
+            <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs text-amber-800 flex items-center gap-2 shrink-0">
+              <span className="shrink-0 text-base">⚠️</span>
+              <p className="leading-tight">
+                Bạn đang đăng nhập bằng tài khoản <b>{isAdmin ? 'Quản trị viên' : 'Nhân viên'}</b>. Tính năng mua vé xem phim bị vô hiệu hóa đối với tài khoản nội bộ.
+              </p>
+            </div>
+          )}
+
           {/* Sân khấu rạp tối */}
           <div className="flex-1 overflow-y-auto bg-[#18181b] px-3 sm:px-6 py-2.5 sm:py-3 text-white text-center">
             
@@ -758,14 +793,30 @@ export default function MoMoBookingModal({
             </div>
 
             {/* Nút "Mua vé" màu hồng Magenta */}
-            <button
-              type="button"
-              disabled={selectedSeats.length === 0}
-              onClick={() => setStep(2)}
-              className="rounded-xl bg-[#d82d8b] px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-pink-600/30 transition hover:bg-[#c2185b] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
-            >
-              Mua vé
-            </button>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <button
+                type="button"
+                disabled={selectedSeats.length === 0 || isStaffOrAdmin}
+                onClick={handleBuyTickets}
+                title={
+                  isStaffOrAdmin
+                    ? 'Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.'
+                    : undefined
+                }
+                className={`rounded-xl bg-[#d82d8b] px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg transition ${
+                  isStaffOrAdmin
+                    ? 'opacity-50 cursor-not-allowed hover:bg-[#d82d8b] active:scale-100 shadow-none'
+                    : 'shadow-pink-600/30 hover:bg-[#c2185b] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+                }`}
+              >
+                Mua vé
+              </button>
+              {isStaffOrAdmin && (
+                <span className="text-[10px] text-rose-500 font-semibold text-right max-w-[180px] sm:max-w-xs leading-tight">
+                  ⚠️ Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.
+                </span>
+              )}
+            </div>
           </div>
 
         </div>
@@ -792,6 +843,16 @@ export default function MoMoBookingModal({
             </h2>
             <div className="w-8" />
           </div>
+
+          {/* Thông báo tài khoản nội bộ */}
+          {isStaffOrAdmin && (
+            <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs text-amber-800 flex items-center gap-2 shrink-0">
+              <span className="shrink-0 text-base">⚠️</span>
+              <p className="leading-tight">
+                Bạn đang đăng nhập bằng tài khoản <b>{isAdmin ? 'Quản trị viên' : 'Nhân viên'}</b>. Tính năng mua vé xem phim bị vô hiệu hóa đối với tài khoản nội bộ.
+              </p>
+            </div>
+          )}
 
           {/* Danh sách các Combo bắp nước */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 divide-y divide-slate-100">
@@ -912,21 +973,37 @@ export default function MoMoBookingModal({
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
               <div>
                 <span className="text-xs text-slate-500">Tổng cộng:</span>
                 <p className="text-lg font-black text-slate-900">{formatPrice(totalAmount)}</p>
               </div>
 
               {/* Nút "Tiếp tục" chuyển sang thanh toán QR */}
-              <button
-                type="button"
-                disabled={loading}
-                onClick={handleProceedToPayment}
-                className="rounded-xl bg-[#d82d8b] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-pink-600/30 transition hover:bg-[#c2185b] active:scale-95 disabled:opacity-50 cursor-pointer"
-              >
-                {loading ? 'Đang tạo đơn...' : 'Tiếp tục'}
-              </button>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <button
+                  type="button"
+                  disabled={loading || isStaffOrAdmin}
+                  onClick={handleProceedToPayment}
+                  title={
+                    isStaffOrAdmin
+                      ? 'Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.'
+                      : undefined
+                  }
+                  className={`rounded-xl bg-[#d82d8b] px-8 py-3 text-sm font-bold text-white shadow-lg transition ${
+                    isStaffOrAdmin
+                      ? 'opacity-50 cursor-not-allowed hover:bg-[#d82d8b] active:scale-100 shadow-none'
+                      : 'shadow-pink-600/30 hover:bg-[#c2185b] active:scale-95 disabled:opacity-50 cursor-pointer'
+                  }`}
+                >
+                  {loading ? 'Đang tạo đơn...' : 'Tiếp tục'}
+                </button>
+                {isStaffOrAdmin && (
+                  <span className="text-[10px] text-rose-500 font-semibold text-right max-w-xs leading-tight">
+                    ⚠️ Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

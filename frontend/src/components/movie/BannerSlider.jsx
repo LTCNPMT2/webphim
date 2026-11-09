@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../hooks/useAuth.js';
 import { assetUrl, formatRating } from '../../utils/format.js';
 import { AGE_COLORS } from '../../utils/constants.js';
 import Skeleton from '../ui/Skeleton.jsx';
@@ -121,6 +123,14 @@ export default function BannerSlider({
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  const { user, isAdmin, isStaff } = useAuth();
+  const userRole = String(user?.role || '').toLowerCase();
+  const isStaffOrAdmin = Boolean(
+    isAdmin ||
+    isStaff ||
+    ['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)
+  );
 
   // Tự động chuyển slide (giữ nguyên chức năng)
   useEffect(() => {
@@ -272,10 +282,26 @@ export default function BannerSlider({
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => onBookMovie?.(movie)}
-                className="group/btn inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-brand-600 via-rose-600 to-pink-600 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-brand-600/35 transition duration-300 hover:from-brand-500 hover:to-pink-500 hover:scale-105 active:scale-95 cursor-pointer"
+                disabled={isStaffOrAdmin}
+                onClick={() => {
+                  if (isStaffOrAdmin) {
+                    toast.error('Tài khoản Quản trị viên / Nhân viên không thể đặt vé!');
+                    return;
+                  }
+                  onBookMovie?.(movie);
+                }}
+                title={
+                  isStaffOrAdmin
+                    ? 'Tài khoản Quản trị viên / Nhân viên không thể đặt vé!'
+                    : undefined
+                }
+                className={`group/btn inline-flex items-center gap-2.5 rounded-xl px-6 py-3 text-sm font-bold text-white shadow-xl transition duration-300 ${
+                  isStaffOrAdmin
+                    ? 'bg-gradient-to-r from-brand-600 via-rose-600 to-pink-600 opacity-50 cursor-not-allowed shadow-none'
+                    : 'bg-gradient-to-r from-brand-600 via-rose-600 to-pink-600 shadow-brand-600/35 hover:from-brand-500 hover:to-pink-500 hover:scale-105 active:scale-95 cursor-pointer'
+                }`}
               >
-                <span className="transition-transform duration-300 group-hover/btn:rotate-12">🎟️</span>
+                <span className={isStaffOrAdmin ? '' : 'transition-transform duration-300 group-hover/btn:rotate-12'}>🎟️</span>
                 <span>Đặt vé ngay</span>
               </button>
 

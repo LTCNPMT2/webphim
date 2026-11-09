@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../hooks/useAuth.js';
 import { useFetch } from '../hooks/useFetch.js';
 import { getMovies, getShowtimes } from '../services/catalogService.js';
 import { formatTime, toDateKey } from '../utils/format.js';
@@ -13,6 +15,13 @@ import CineBadge from '../components/common/CineBadge.jsx';
 export default function Home() {
   const [trailerMovie, setTrailerMovie] = useState(null);
   const [bookingModalData, setBookingModalData] = useState(null);
+  const { user, isAdmin, isStaff } = useAuth();
+  const userRole = String(user?.role || '').toLowerCase();
+  const isStaffOrAdmin = Boolean(
+    isAdmin ||
+    isStaff ||
+    ['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)
+  );
 
   // Phim chiếu banner và phim đang chiếu (hiển thị kèm thứ hạng Top 1, 2, 3...)
   const nowShowing = useFetch(() => getMovies({ status: 'now_showing', limit: 12 }), []);
@@ -23,6 +32,10 @@ export default function Home() {
   // Bấm "Đặt vé ngay" trên Banner -> Mở ngay dãy ghế ngồi
   const handleBookMovie = async (movie) => {
     if (!movie) return;
+    if (isStaffOrAdmin) {
+      toast.error('Tài khoản Quản trị viên / Nhân viên không thể đặt vé!');
+      return;
+    }
     try {
       const todayKey = toDateKey(new Date());
       const res = await getShowtimes({ movie_id: movie.id, date: todayKey });

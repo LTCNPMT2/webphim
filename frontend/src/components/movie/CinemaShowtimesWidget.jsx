@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../hooks/useAuth.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import { getCinemas, getMovies, getShowtimes } from '../../services/catalogService.js';
 import { assetUrl, formatTime, toDateKey } from '../../utils/format.js';
@@ -94,6 +96,13 @@ export default function CinemaShowtimesWidget() {
   const [selectedCinemaId, setSelectedCinemaId] = useState('cine-sg-p1');
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
   const [bookingModalData, setBookingModalData] = useState(null);
+  const { user, isAdmin, isStaff } = useAuth();
+  const userRole = String(user?.role || '').toLowerCase();
+  const isStaffOrAdmin = Boolean(
+    isAdmin ||
+    isStaff ||
+    ['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)
+  );
 
   // Lấy dữ liệu từ API
   const dbCinemasFetch = useFetch(getCinemas, []);
@@ -660,15 +669,28 @@ export default function CinemaShowtimesWidget() {
                         <button
                           key={st.id}
                           type="button"
-                          onClick={() =>
+                          disabled={isStaffOrAdmin}
+                          onClick={() => {
+                            if (isStaffOrAdmin) {
+                              toast.error('Tài khoản Quản trị viên / Nhân viên không thể đặt vé!');
+                              return;
+                            }
                             setBookingModalData({
                               showtime: st,
                               movie: m,
                               cinema: currentCinema,
-                            })
+                            });
+                          }}
+                          className={`group flex items-center justify-center rounded-xl border px-3 py-1.5 text-xs font-bold transition shadow-2xs ${
+                            isStaffOrAdmin
+                              ? 'opacity-50 cursor-not-allowed border-slate-300 bg-slate-100 text-slate-400 shadow-none'
+                              : 'border-sky-400 bg-sky-50/40 text-sky-700 hover:border-[#d82d8b] hover:bg-[#d82d8b] hover:text-white active:scale-95 cursor-pointer'
+                          }`}
+                          title={
+                            isStaffOrAdmin
+                              ? 'Tài khoản Quản trị viên / Nhân viên không thể đặt vé!'
+                              : 'Bấm để chọn ghế cho suất chiếu này'
                           }
-                          className="group flex items-center justify-center rounded-xl border border-sky-400 bg-sky-50/40 px-3 py-1.5 text-xs font-bold text-sky-700 hover:border-[#d82d8b] hover:bg-[#d82d8b] hover:text-white transition shadow-2xs active:scale-95 cursor-pointer"
-                          title="Bấm để chọn ghế cho suất chiếu này"
                         >
                           <span>{st.startTimeStr} ~ {st.endTimeStr}</span>
                         </button>

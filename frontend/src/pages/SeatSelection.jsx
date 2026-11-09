@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from '../hooks/useAuth.js';
 import { useFetch } from '../hooks/useFetch.js';
 import { createBooking, getCombos, getSeatMap, validatePromo } from '../services/bookingService.js';
 import { getErrorMessage } from '../services/api.js';
@@ -21,6 +22,14 @@ const POLL_MS = 15000; // tự làm mới sơ đồ ghế để thấy ghế ng�
 
 function SeatSelectionInner({ showtimeId }) {
   const navigate = useNavigate();
+  const { user, isAdmin, isStaff } = useAuth();
+  const userRole = String(user?.role || '').toLowerCase();
+  const isStaffOrAdmin = Boolean(
+    isAdmin ||
+    isStaff ||
+    ['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)
+  );
+
   const map = useFetch(() => getSeatMap(showtimeId), [showtimeId]);
   const combosFetch = useFetch(getCombos, []);
 
@@ -105,6 +114,10 @@ function SeatSelectionInner({ showtimeId }) {
   };
 
   const handleSubmit = async () => {
+    if (isStaffOrAdmin) {
+      toast.error('Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.');
+      return;
+    }
     setSubmitError('');
     setSubmitting(true);
     try {
@@ -212,16 +225,45 @@ function SeatSelectionInner({ showtimeId }) {
               </div>
             )}
             {step === 1 ? (
-              <Button className="w-full" disabled={selectedIds.length === 0 || started} onClick={() => setStep(2)}>
-                {selectedIds.length === 0 ? 'Hãy chọn ghế' : `Tiếp tục (${selectedIds.length} ghế)`}
-              </Button>
+              <div className="space-y-1.5">
+                <Button
+                  className="w-full"
+                  disabled={selectedIds.length === 0 || started || isStaffOrAdmin}
+                  onClick={() => {
+                    if (isStaffOrAdmin) {
+                      toast.error('Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.');
+                      return;
+                    }
+                    setStep(2);
+                  }}
+                >
+                  {selectedIds.length === 0 ? 'Hãy chọn ghế' : `Tiếp tục (${selectedIds.length} ghế)`}
+                </Button>
+                {isStaffOrAdmin && (
+                  <p className="text-[11px] text-rose-400 font-medium text-center">
+                    ⚠️ Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.
+                  </p>
+                )}
+              </div>
             ) : (
-              <>
-                <Button className="w-full" loading={submitting} disabled={started} onClick={handleSubmit}>
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  loading={submitting}
+                  disabled={started || isStaffOrAdmin}
+                  onClick={handleSubmit}
+                >
                   {submitting ? 'Đang giữ ghế...' : 'Giữ ghế & thanh toán'}
                 </Button>
-                <Button variant="outline" className="w-full" disabled={submitting} onClick={() => setStep(1)}>← Chọn lại ghế</Button>
-              </>
+                {isStaffOrAdmin && (
+                  <p className="text-[11px] text-rose-400 font-medium text-center">
+                    ⚠️ Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.
+                  </p>
+                )}
+                <Button variant="outline" className="w-full" disabled={submitting} onClick={() => setStep(1)}>
+                  ← Chọn lại ghế
+                </Button>
+              </div>
             )}
           </OrderSummary>
         </div>

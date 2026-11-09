@@ -28,6 +28,11 @@ const seatLabel = (s) => `${s.row_label}${s.seat_number}`;
 //     thấy ghế đã bị người trước giữ.
 //  2) UNIQUE(showtime_id, seat_id, active) trong DB: dù code có sót, DB vẫn từ chối ghế trùng.
 exports.create = async (user, { showtime_id, seat_ids, combos = [], promo_code }) => {
+  const userRole = String(user?.role || '').toLowerCase();
+  if (['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)) {
+    throw new ApiError(403, 'Tài khoản Quản trị viên và Nhân viên không thể thực hiện mua vé trên giao diện này.');
+  }
+
   const seatIds = [...new Set(seat_ids)];
   if (seatIds.length !== seat_ids.length) throw new ApiError(400, 'Danh sách ghế bị trùng lặp');
   if (seatIds.length > MAX_SEATS) throw new ApiError(400, `Mỗi đơn đặt tối đa ${MAX_SEATS} ghế`);

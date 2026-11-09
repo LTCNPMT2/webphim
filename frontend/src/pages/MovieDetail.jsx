@@ -37,7 +37,13 @@ function generateDates() {
 export default function MovieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin, isStaff } = useAuth();
+  const userRole = String(user?.role || '').toLowerCase();
+  const isStaffOrAdmin = Boolean(
+    isAdmin ||
+    isStaff ||
+    ['admin', 'staff', 'nhan_vien', 'manager'].includes(userRole)
+  );
 
   // Tải thông tin phim chi tiết
   const { data: movie, loading, error, status, reload: reloadMovie } = useFetch(() => getMovie(id), [id]);
@@ -210,6 +216,10 @@ export default function MovieDetail() {
   });
 
   const handleQuickBook = () => {
+    if (isStaffOrAdmin) {
+      toast.error('Tài khoản Quản trị viên / Nhân viên không thể đặt vé!');
+      return;
+    }
     let foundSt = null;
     let foundCinema = null;
     for (const c of filteredShowtimesCinemas) {
@@ -343,8 +353,24 @@ export default function MovieDetail() {
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleQuickBook}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#d82d8b] to-rose-600 hover:from-[#c2185b] hover:to-rose-700 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-pink-600/30 transition active:scale-95 cursor-pointer"
+                  disabled={isStaffOrAdmin}
+                  onClick={() => {
+                    if (isStaffOrAdmin) {
+                      toast.error('Tài khoản Quản trị viên / Nhân viên không thể đặt vé!');
+                      return;
+                    }
+                    handleQuickBook();
+                  }}
+                  title={
+                    isStaffOrAdmin
+                      ? 'Tài khoản Quản trị viên / Nhân viên không thể đặt vé!'
+                      : undefined
+                  }
+                  className={`inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold text-white shadow-lg transition ${
+                    isStaffOrAdmin
+                      ? 'bg-gradient-to-r from-[#d82d8b] to-rose-600 opacity-50 cursor-not-allowed shadow-none'
+                      : 'bg-gradient-to-r from-[#d82d8b] to-rose-600 hover:from-[#c2185b] hover:to-rose-700 shadow-pink-600/30 active:scale-95 cursor-pointer'
+                  }`}
                 >
                   <span>🎟️</span> Mua vé ngay
                 </button>
@@ -638,8 +664,12 @@ export default function MovieDetail() {
                                 <button
                                   key={st.id}
                                   type="button"
-                                  disabled={isSoldOut}
+                                  disabled={isSoldOut || isStaffOrAdmin}
                                   onClick={() => {
+                                    if (isStaffOrAdmin) {
+                                      toast.error('Tài khoản Quản trị viên / Nhân viên không thể đặt vé!');
+                                      return;
+                                    }
                                     if (isSoldOut) return;
                                     setBookingModalData({
                                       showtime: {
@@ -654,12 +684,20 @@ export default function MovieDetail() {
                                       cinema,
                                     });
                                   }}
-                                  className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition shadow-sm cursor-pointer ${
-                                    isSoldOut
+                                  className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition shadow-sm ${
+                                    isStaffOrAdmin
+                                      ? 'cursor-not-allowed border-white/5 bg-white/5 text-slate-500 opacity-50 shadow-none'
+                                      : isSoldOut
                                       ? 'cursor-not-allowed border-white/5 bg-white/5 text-slate-500'
-                                      : 'border-white/10 bg-[#24111d] hover:border-pink-500 hover:bg-[#341629] text-white hover:scale-102'
+                                      : 'border-white/10 bg-[#24111d] hover:border-pink-500 hover:bg-[#341629] text-white hover:scale-102 cursor-pointer'
                                   }`}
-                                  title="Bấm để chọn ghế cho suất chiếu này"
+                                  title={
+                                    isStaffOrAdmin
+                                      ? 'Tài khoản Quản trị viên / Nhân viên không thể đặt vé!'
+                                      : isSoldOut
+                                      ? 'Suất chiếu đã hết vé'
+                                      : 'Bấm để chọn ghế cho suất chiếu này'
+                                  }
                                 >
                                   <span className="text-sm font-extrabold group-hover:text-pink-400 transition">
                                     {start}
